@@ -4,9 +4,6 @@ body {
     margin: 0;
     padding: 0;
     height: 100%;
-    /* Aseguramos que el body cubra toda la altura */
-    overflow-x: hidden;
-    /* Eliminar barra horizontal */
     font-family: 'Roboto', sans-serif;
     background: linear-gradient(135deg, #1c1c1c, #3e3e3e);
     color: #f1f1f1;
@@ -17,11 +14,12 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
+    overflow-x: hidden;
 }
 
+/* Header */
 header {
     background: #d4af37;
-    /* Gold color */
     color: #1c1c1c;
     text-align: center;
     padding: 20px 10px;
@@ -34,6 +32,7 @@ header h1 {
     font-size: 24px;
 }
 
+/* Main content */
 main {
     flex: 1;
     padding: 20px;
@@ -43,10 +42,9 @@ main {
     box-sizing: border-box;
 }
 
+/* Controls section */
 #controls {
     margin-bottom: 20px;
-    margin-left: 20px;
-    margin-right: 20px;
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #d4af37;
     padding: 20px;
@@ -90,53 +88,42 @@ main {
     background-color: #e8c547;
 }
 
-#nameInputs {
-    margin-top: 20px;
-}
-
-#nameInputs input {
-    font-size: 16px;
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 5px;
-    border: 1px solid #555;
-    width: 100%;
-    max-width: 300px;
-    box-sizing: border-box;
-}
-
 #generateButton {
     display: block;
     margin: 20px auto;
 }
 
+/* Counters section */
 #counters {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
+    flex-wrap: wrap; /* Permite que los contadores se ajusten en filas */
+    justify-content: center;
+    gap: 10px; /* Espacio entre los contadores */
+    width: 100%;
+    max-width: 480px;
+    box-sizing: border-box;
 }
 
+/* Individual Counter styles */
 .counter {
     background-color: #1f1f1f;
     border-radius: 10px;
-    padding: 0rem;
-    width: 80%;
-    max-width: 300px;
+    padding: 15px;
+    width: 130px; /* Tamaño más pequeño para que quepan más contadores */
+    max-width: 130px;
     text-align: center;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
     position: relative;
-    /* Se añade para posicionar el botón dentro del contador */
 }
 
 .counter h3 {
-    font-size: 20px;
+    font-size: 16px;
     margin-bottom: 10px;
 }
 
 .counter .count {
-    font-size: 24px;
-    margin: 20px 0;
+    font-size: 20px;
+    margin: 10px 0;
     font-weight: bold;
 }
 
@@ -164,31 +151,34 @@ button:disabled {
     cursor: not-allowed;
 }
 
+/* Button styles - Circular */
 button.next-turn-button {
     background-color: #d4af37;
     color: #fff;
-    font-size: 24px;
-    width: 60px; /* Define un tamaño fijo */
-    height: 60px; /* Define un tamaño fijo para el círculo */
-    padding: 0; /* Eliminamos el padding */
+    font-size: 24px; /* Asegurando que el texto sea pequeño */
+    width: 30px;  /* Ajuste para un tamaño más pequeño */
+    height: 30px; /* Hacemos el botón más pequeño */
+    padding: 0;  /* Eliminar cualquier relleno adicional */
     border: none;
-    border-radius: 50%; /* Asegura que sea completamente circular */
+    border-radius: 50%; /* Mantenerlo circular */
     cursor: pointer;
     transition: background-color 0.3s ease;
     position: absolute;
-    top: 50%;
-    right: 10px; /* Un pequeño ajuste para separarlo más */
-    transform: translateY(-50%);
+    top: 45%;
+    right: 5px; /* Posicionar el botón a la derecha */
+    transform: translateY(-50%) scale(0.6); /* Reducir el tamaño usando scale */
     display: flex;
     align-items: center;
-    justify-content: center; /* Centra el contenido dentro del botón */
+    justify-content: center;
+    line-height: 0; /* Reducir espacio adicional */
 }
+
 
 button.next-turn-button:hover {
     background-color: #e8c547;
 }
 
-
+/* Button state when it is the current turn */
 button.current-turn {
     border: 2px solid #d4af37;
 }
@@ -199,4 +189,54 @@ button.current-turn {
 
 .trash-button {
     background-color: #9e0000;
+}
+
+/* Media query for responsive design */
+@media (max-width: 480px) {
+    /* Reduce sizes of the counters to fit them properly */
+    .counter {
+        width: 100px; /* Menor tamaño para caber más en la pantalla */
+        max-width: 100px;
+    }
+
+    /* Adjust next-turn-button size */
+    button.next-turn-button {
+        width: 45px; 
+        height: 45px;
+        font-size: 20px; /* Reducción del tamaño del texto */
+    }
+
+    /* Adjust font sizes for mobile */
+    .counter h3 {
+        font-size: 14px;
+    }
+
+    .counter .count {
+        font-size: 18px;
+    }
+
+    /* Adjust button sizes */
+    button {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+
+    /* Adjust controls input fields */
+    #controls input {
+        font-size: 14px;
+        max-width: 250px;
+    }
+}
+
+/* Larger screens */
+@media (min-width: 768px) {
+    .counter {
+        width: 150px; /* Un poco más grande en pantallas grandes */
+    }
+
+    button.next-turn-button {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
 }
