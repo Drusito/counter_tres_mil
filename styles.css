@@ -120,7 +120,7 @@ main {
 .counter {
     background-color: #1f1f1f;
     border-radius: 10px;
-    padding: 20px;
+    padding: 0rem;
     width: 80%;
     max-width: 300px;
     text-align: center;
@@ -168,22 +168,26 @@ button.next-turn-button {
     background-color: #d4af37;
     color: #fff;
     font-size: 24px;
-    padding: 10px 15px;
+    width: 60px; /* Define un tamaño fijo */
+    height: 60px; /* Define un tamaño fijo para el círculo */
+    padding: 0; /* Eliminamos el padding */
     border: none;
-    border-radius: 5px;
+    border-radius: 50%; /* Asegura que sea completamente circular */
     cursor: pointer;
     transition: background-color 0.3s ease;
     position: absolute;
-    /* Posicionar fuera del contenedor */
     top: 50%;
-    right: 20px;
-    /* Mover a la derecha */
+    right: 10px; /* Un pequeño ajuste para separarlo más */
     transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centra el contenido dentro del botón */
 }
 
 button.next-turn-button:hover {
-    background-color: #866f23;
+    background-color: #e8c547;
 }
+
 
 button.current-turn {
     border: 2px solid #d4af37;
