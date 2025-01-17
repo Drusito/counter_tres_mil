@@ -1,0 +1,209 @@
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #1c1c1c, #3e3e3e);
+    color: #f1f1f1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  header {
+    background: #d4af37; /* Gold color */
+    color: #1c1c1c;
+    text-align: center;
+    padding: 20px 10px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+  
+  header h1 {
+    margin: 0;
+    font-size: 24px;
+  }
+  
+  main {
+    flex: 1;
+    padding: 20px;
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+  }
+  
+  #controls {
+    margin-bottom: 20px;
+    margin-left: 20px; /* Añadido margen izquierdo */
+    margin-right: 20px; /* Añadido margen derecho */
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #d4af37;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+  
+  #controls label {
+    font-size: 18px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  
+  #controls input {
+    font-size: 16px;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: calc(100% - 20px);
+    max-width: 300px;
+    text-align: center;
+  }
+  
+  #controls button {
+    background-color: #d4af37;
+    color: #1c1c1c;
+    font-size: 16px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.3s;
+  }
+  
+  #controls button:hover {
+    background-color: #e8c547;
+  }
+  
+  #nameInputs {
+    margin-top: 20px;
+  }
+  
+  #nameInputs input {
+    font-size: 16px;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 5px;
+    border: 1px solid #555;
+    width: calc(100% - 20px);
+    max-width: 300px;
+  }
+  
+  #generateButton {
+    display: block;
+    margin: 20px auto;
+    font-size: 16px;
+    padding: 8px 15px;
+    background-color: #d4af37;
+    color: #1c1c1c;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+  
+  #generateButton:hover {
+    background-color: #e8c547;
+  }
+  
+  /* Counters */
+  #counters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+  }
+  
+/* Estilos para los botones de Incremento y Decremento */
+.counter button {
+    font-family: 'Roboto', sans-serif; /* Fuente moderna */
+    font-size: 22px; /* Aumentamos el tamaño del texto */
+    width: 50px; /* Hacemos que los botones sean cuadrados */
+    height: 50px; /* Altura igual al ancho para hacerlos cuadrados */
+    border: none;
+    border-radius: 10px; /* Bordes redondeados para un toque más suave */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin: 0 10px; /* Espaciado horizontal entre los botones */
+}
+
+.counter button:not(.trash-button) {
+    background-color: #28a745; /* Verde brillante */
+    color: #fff;
+}
+
+.counter button:not(.trash-button):hover {
+    background-color: #218838;
+}
+
+.counter .trash-button {
+    background-color: #c82333; /* Rojo brillante */
+    color: #fff;
+}
+
+.counter .trash-button:hover {
+    background-color: #e63946;
+}
+
+/* Disposición horizontal de los botones */
+.counter {
+    display: flex;
+    justify-content: center; /* Alineamos los botones al centro */
+    align-items: center; /* Alineamos los botones verticalmente al centro */
+    gap: 10px; /* Separación entre los botones */
+}
+
+/* Estilo adicional para hacer más claro que los botones son de incremento y decremento */
+.counter .increment-button {
+    background-color: #28a745; /* Botón de incremento verde */
+}
+
+.counter .decrement-button {
+    background-color: #c82333; /* Botón de decremento rojo */
+}
+
+
+  
+  /* Footer */
+  footer {
+    background: #1c1c1c;
+    color: #d4af37;
+    text-align: center;
+    padding: 10px;
+    width: 100%;
+    font-size: 14px;
+  }
+  
+  /* Estilo para resaltar al jugador actual */
+.current-turn {
+    border: 2px solid #e8c547;
+    padding: 1rem;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.05);  /* Agrandar ligeramente el contador */
+    transition: transform 0.3s ease; /* Suavizar el cambio de tamaño */
+  }
+  
+  #nextTurnButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: #d4af37;
+  color: #1c1c1c;
+  font-size: 24px; /* Tamaño más grande para la flecha */
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.3s;
+}
+
+#nextTurnButton:hover {
+  background-color: #e8c547;
+}

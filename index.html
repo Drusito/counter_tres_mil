@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contadores de Jugadores - Casino</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="header">
+    <h1>🎰 3000 🎲</h1>
+    <p id="roundCounter">Ronda: 1</p> <!-- Contador de rondas -->
+  </header>
+  <main>
+    <div id="controls">
+      <label for="playerCount" id="playerCountLabel">Número de jugadores:</label>
+      <input type="number" id="playerCount" min="1" value="1">
+      <button id="confirmButton" onclick="createNameInputs()">Confirmar jugadores</button>
+    </div>
+    <div id="nameInputs"></div>
+    <button id="generateButton" onclick="generateCounters()" style="display: none;">Generar contadores</button>
+    <div id="counters"></div>
+    <button id="nextTurnButton" onclick="nextTurn()" style="display: none;">&rarr;</button>
+  </main>
+  <footer id="footer">
+    <p>&copy; 2025 - Casino Royale</p>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
