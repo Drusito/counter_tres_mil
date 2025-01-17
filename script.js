@@ -28,13 +28,12 @@ function generateCounters() {
   const countersDiv = document.getElementById('counters');
   const nameInputsDiv = document.getElementById('nameInputs');
   const generateButton = document.getElementById('generateButton');
-  const nextTurnButton = document.getElementById('nextTurnButton');
 
   nameInputsDiv.style.display = 'none';
   generateButton.style.display = 'none';
-  nextTurnButton.style.display = 'block';
-
   countersDiv.innerHTML = '';
+
+  // Crear los contadores para cada jugador
   for (let i = 1; i <= totalPlayers; i++) {
     const playerName = document.getElementById(`playerName${i}`).value || `Jugador ${i}`;
     const counterDiv = document.createElement('div');
@@ -51,7 +50,7 @@ function generateCounters() {
     counterDiv.appendChild(countDisplay);
 
     const trashButton = document.createElement('button');
-    trashButton.className = 'trash-button';
+    trashButton.classList.add('trash-button');
     trashButton.textContent = '-';
     trashButton.onclick = () => {
       countDisplay.textContent = parseInt(countDisplay.textContent) - 50;
@@ -59,6 +58,7 @@ function generateCounters() {
 
     const incrementButton = document.createElement('button');
     incrementButton.textContent = '+';
+    incrementButton.classList.add('plus-button');
     incrementButton.onclick = () => {
       countDisplay.textContent = parseInt(countDisplay.textContent) + 50;
     };
@@ -69,11 +69,23 @@ function generateCounters() {
     buttonContainer.appendChild(incrementButton);
 
     counterDiv.appendChild(buttonContainer);
+
+    // Crear el botón "Siguiente Turno" solo en el contador del jugador cuyo turno es
+    const nextTurnButton = document.createElement('button');
+    nextTurnButton.className = 'next-turn-button';
+    nextTurnButton.textContent = '→';
+    nextTurnButton.onclick = () => {
+      nextTurn(); // Llamamos a la función de siguiente turno
+    };
+    nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';  // Mostrar solo en el turno actual
+    counterDiv.appendChild(nextTurnButton);
+
     countersDiv.appendChild(counterDiv);
   }
 
   highlightCurrentTurn();
   disableAllButtonsExceptCurrent();
+  document.getElementById('controls').style.display = 'none';
 }
 
 function nextTurn() {
@@ -90,10 +102,13 @@ function nextTurn() {
 function highlightCurrentTurn() {
   const allCounters = document.querySelectorAll('.counter');
   allCounters.forEach((counter, index) => {
+    const nextTurnButton = counter.querySelector('.next-turn-button');
     if (index === currentTurn - 1) {
       counter.classList.add('current-turn');
+      nextTurnButton.style.display = 'block';  // Mostrar el botón en el turno actual
     } else {
       counter.classList.remove('current-turn');
+      nextTurnButton.style.display = 'none';  // Ocultar el botón en otros turnos
     }
   });
 }
