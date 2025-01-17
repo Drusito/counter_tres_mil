@@ -1,70 +1,80 @@
 /* General Styles */
+html,
 body {
-    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
+    height: 100%;
+    /* Aseguramos que el body cubra toda la altura */
+    overflow-x: hidden;
+    /* Eliminar barra horizontal */
+    font-family: 'Roboto', sans-serif;
     background: linear-gradient(135deg, #1c1c1c, #3e3e3e);
     color: #f1f1f1;
-    min-height: 100vh;
+}
+
+body {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-  }
-  
-  header {
-    background: #d4af37; /* Gold color */
+}
+
+header {
+    background: #d4af37;
+    /* Gold color */
     color: #1c1c1c;
     text-align: center;
     padding: 20px 10px;
     width: 100%;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-  }
-  
-  header h1 {
+}
+
+header h1 {
     margin: 0;
     font-size: 24px;
-  }
-  
-  main {
+}
+
+main {
     flex: 1;
     padding: 20px;
     width: 100%;
     max-width: 480px;
     text-align: center;
-  }
-  
-  #controls {
+    box-sizing: border-box;
+}
+
+#controls {
     margin-bottom: 20px;
-    margin-left: 20px; /* Añadido margen izquierdo */
-    margin-right: 20px; /* Añadido margen derecho */
+    margin-left: 20px;
+    margin-right: 20px;
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #d4af37;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
 }
 
-  
-  #controls label {
+#controls label {
     font-size: 18px;
     margin-bottom: 10px;
     display: block;
-  }
-  
-  #controls input {
+}
+
+#controls input {
     font-size: 16px;
     padding: 8px;
     border: none;
     border-radius: 5px;
     margin-top: 10px;
     margin-bottom: 10px;
-    width: calc(100% - 20px);
+    width: 100%;
     max-width: 300px;
     text-align: center;
-  }
-  
-  #controls button {
+    box-sizing: border-box;
+}
+
+#controls button {
     background-color: #d4af37;
     color: #1c1c1c;
     font-size: 16px;
@@ -74,136 +84,115 @@ body {
     cursor: pointer;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     transition: background-color 0.3s;
-  }
-  
-  #controls button:hover {
+}
+
+#controls button:hover {
     background-color: #e8c547;
-  }
-  
-  #nameInputs {
+}
+
+#nameInputs {
     margin-top: 20px;
-  }
-  
-  #nameInputs input {
+}
+
+#nameInputs input {
     font-size: 16px;
     padding: 8px;
     margin: 5px 0;
     border-radius: 5px;
     border: 1px solid #555;
-    width: calc(100% - 20px);
+    width: 100%;
     max-width: 300px;
-  }
-  
-  #generateButton {
+    box-sizing: border-box;
+}
+
+#generateButton {
     display: block;
     margin: 20px auto;
+}
+
+#counters {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.counter {
+    background-color: #1f1f1f;
+    border-radius: 10px;
+    padding: 20px;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    position: relative;
+    /* Se añade para posicionar el botón dentro del contador */
+}
+
+.counter h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.counter .count {
+    font-size: 24px;
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+.button-container {
+    margin-bottom: 10px;
+}
+
+button {
+    padding: 10px 20px;
     font-size: 16px;
-    padding: 8px 15px;
-    background-color: #d4af37;
-    color: #1c1c1c;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-  }
-  
-  #generateButton:hover {
+    background-color: #d4af37;
+    color: #1c1c1c;
+    margin: 0 5px;
+}
+
+button:hover {
     background-color: #e8c547;
-  }
-  
-  /* Counters */
-  #counters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-  }
-  
-/* Estilos para los botones de Incremento y Decremento */
-.counter button {
-    font-family: 'Roboto', sans-serif; /* Fuente moderna */
-    font-size: 22px; /* Aumentamos el tamaño del texto */
-    width: 50px; /* Hacemos que los botones sean cuadrados */
-    height: 50px; /* Altura igual al ancho para hacerlos cuadrados */
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+button.next-turn-button {
+    background-color: #d4af37;
+    color: #fff;
+    font-size: 24px;
+    padding: 10px 15px;
     border: none;
-    border-radius: 10px; /* Bordes redondeados para un toque más suave */
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin: 0 10px; /* Espaciado horizontal entre los botones */
+    transition: background-color 0.3s ease;
+    position: absolute;
+    /* Posicionar fuera del contenedor */
+    top: 50%;
+    right: 20px;
+    /* Mover a la derecha */
+    transform: translateY(-50%);
 }
 
-.counter button:not(.trash-button) {
-    background-color: #28a745; /* Verde brillante */
-    color: #fff;
+button.next-turn-button:hover {
+    background-color: #866f23;
 }
 
-.counter button:not(.trash-button):hover {
-    background-color: #218838;
+button.current-turn {
+    border: 2px solid #d4af37;
 }
 
-.counter .trash-button {
-    background-color: #c82333; /* Rojo brillante */
-    color: #fff;
+.plus-button {
+    background-color: #28a745;
 }
 
-.counter .trash-button:hover {
-    background-color: #e63946;
-}
-
-/* Disposición horizontal de los botones */
-.counter {
-    display: flex;
-    justify-content: center; /* Alineamos los botones al centro */
-    align-items: center; /* Alineamos los botones verticalmente al centro */
-    gap: 10px; /* Separación entre los botones */
-}
-
-/* Estilo adicional para hacer más claro que los botones son de incremento y decremento */
-.counter .increment-button {
-    background-color: #28a745; /* Botón de incremento verde */
-}
-
-.counter .decrement-button {
-    background-color: #c82333; /* Botón de decremento rojo */
-}
-
-
-  
-  /* Footer */
-  footer {
-    background: #1c1c1c;
-    color: #d4af37;
-    text-align: center;
-    padding: 10px;
-    width: 100%;
-    font-size: 14px;
-  }
-  
-  /* Estilo para resaltar al jugador actual */
-.current-turn {
-    border: 2px solid #e8c547;
-    padding: 1rem;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.9);
-    transform: scale(1.05);  /* Agrandar ligeramente el contador */
-    transition: transform 0.3s ease; /* Suavizar el cambio de tamaño */
-  }
-  
-  #nextTurnButton {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: #d4af37;
-  color: #1c1c1c;
-  font-size: 24px; /* Tamaño más grande para la flecha */
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-  transition: background-color 0.3s;
-}
-
-#nextTurnButton:hover {
-  background-color: #e8c547;
+.trash-button {
+    background-color: #9e0000;
 }
