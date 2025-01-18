@@ -100,6 +100,7 @@ function generateCounters() {
     counterDiv.appendChild(bankruptButton);
 
     countersDiv.appendChild(counterDiv);
+    disableAllButtonsExceptCurrent();
   }
 }
 
