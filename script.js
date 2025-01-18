@@ -138,7 +138,27 @@ function nextTurn(countDisplay, playerIndex) {
     currentTurn = 1;
     round++;
     document.getElementById('roundCounter').textContent = `Ronda: ${round}`;
+  
+    // Verificar si algún jugador ha superado los 3000 puntos
+    const playersAbove3000 = [];
+
+    playerScores.forEach((scores, index) => {
+      const totalScore = scores.reduce((a, b) => a + b, 0); // Calcular la puntuación total del jugador
+      if (totalScore >= 3000) {
+        console.log(`El Jugador ${index + 1} ha superado los 3000 puntos con ${totalScore} puntos.`);
+        playersAbove3000.push({ index, totalScore, name: document.getElementById(`playerName${index + 1}`).value || `Jugador ${index + 1}` });
+      }
+    });
+
+    if (playersAbove3000.length > 0) {
+      // Si hay más de un jugador con más de 3000 puntos, se determina el ganador
+      const winner = playersAbove3000.reduce((max, player) => (player.totalScore > max.totalScore ? player : max));
+
+      // Mostrar el panel de victoria
+      showVictoryPanel(winner);
+    }
   }
+  
   highlightCurrentTurn();
   disableAllButtonsExceptCurrent();
 }
@@ -168,6 +188,28 @@ function disableAllButtonsExceptCurrent() {
     button.disabled = false;
   });
 }
+
+// Función para mostrar el panel de victoria
+function showVictoryPanel(winner) {
+  const victoryPanel = document.createElement('div');
+  victoryPanel.classList.add('victory-panel');  // Agregar la clase para los estilos
+
+  // Crear contenido dentro del panel
+  const title = document.createElement('h1');
+  title.textContent = '¡Victoria!';
+
+  const message = document.createElement('p');
+  message.classList.add('message');
+  message.innerHTML = `¡TE HAS HECHO CON LA VICTORIA CABRONAZO!<br><br><br> <strong style="font-size: 50px;">${winner.name}</strong><br><br><br>Con ${winner.totalScore} miserables puntos.`;
+
+  // Añadir todo al panel de victoria
+  victoryPanel.appendChild(title);
+  victoryPanel.appendChild(message);
+
+  // Mostrar el panel
+  document.body.appendChild(victoryPanel);
+}
+
 
 // Función para mostrar la tabla de puntuaciones
 function showFinalScores() {
