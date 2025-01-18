@@ -83,10 +83,19 @@ function generateCounters() {
     nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';
     counterDiv.appendChild(nextTurnButton);
 
-    // Crear el botón "X" para mostrar el modal de "BANKARROTA"
+    // Crear el botón "X" para mostrar el modal de "BANKARROTA" con una imagen en vez de texto
     const bankruptButton = document.createElement('button');
+    bankruptButton.classList.add('no-style');
     bankruptButton.className = 'bankrupt-button';
-    bankruptButton.textContent = 'X';
+    
+    // Crear la imagen de la calavera
+    const skullImage = document.createElement('img');
+    skullImage.src = './images/skull.png';  // Ruta de la imagen PNG
+    skullImage.alt = 'BANKARROTA';  // Texto alternativo
+    skullImage.style.width = '30px'; // Ajustar el tamaño de la imagen
+    skullImage.style.height = '30px'; // Ajustar el tamaño de la imagen
+    bankruptButton.appendChild(skullImage);  // Añadir la imagen al botón
+
     bankruptButton.onclick = showBankruptPopup;
 
     bankruptButton.style.position = 'absolute';
