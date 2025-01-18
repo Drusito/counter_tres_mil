@@ -186,15 +186,13 @@ button:hover {
 }
 
 button:disabled {
-    background-color: #555;
+    background-color: #55555500;
     cursor: not-allowed;
 }
 
 /* Button styles - Circular */
 button.next-turn-button {
-    background-color: #d4af37;
-    color: #fff;
-    font-size: 24px; /* Asegurando que el texto sea pequeño */
+    background-color: #d4af3700;
     width: 30px;  /* Ajuste para un tamaño más pequeño */
     height: 30px; /* Hacemos el botón más pequeño */
     padding: 0;  /* Eliminar cualquier relleno adicional */
@@ -213,7 +211,7 @@ button.next-turn-button {
 }
 
 button.next-turn-button:hover {
-    background-color: #e8c547;
+    background-color: #e8c54700;
 }
 
 button.current-turn {
@@ -272,14 +270,30 @@ button.current-turn {
     }
 }
 
-.bankrupt-button {
+.bankrupt-button{
     background-color: transparent; /* El fondo será transparente */
     border: none; /* Eliminar borde */
     padding: 0; /* Eliminar padding */
     cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
   }
-  
-.bankrupt-button img {
-    width: 600px; /* Establecer el tamaño de la imagen */
-    height: 600px; /* Establecer el tamaño de la imagen */
+  .next-turn-button {
+    background-color: transparent; /* El fondo será transparente */
+    border: none; /* Eliminar borde */
+    padding: 0; /* Eliminar padding */
+    cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
+    font-size: 444px; /* Asegurando que el texto sea pequeño */
+
   }
+  
+  .bankrupt-button:hover{
+    background-color: transparent; /* El fondo será transparente */
+    border: none; /* Eliminar borde */
+    padding: 0; /* Eliminar padding */
+    cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
+  }
+  .next-turn-button:hover {
+        background-color: transparent; /* El fondo será transparente */
+        border: none; /* Eliminar borde */
+        padding: 0; /* Eliminar padding */
+        cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
+}
