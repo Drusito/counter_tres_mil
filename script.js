@@ -76,7 +76,7 @@ function generateCounters() {
     // Crear el botón "Siguiente Turno" solo en el contador del jugador cuyo turno es
     const nextTurnButton = document.createElement('button');
     nextTurnButton.className = 'next-turn-button';
-    nextTurnButton.textContent = '→';
+    nextTurnButton.textContent = '👉';
     nextTurnButton.onclick = () => {
       nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
     };
@@ -87,14 +87,9 @@ function generateCounters() {
     const bankruptButton = document.createElement('button');
     bankruptButton.classList.add('no-style');
     bankruptButton.className = 'bankrupt-button';
+    bankruptButton.textContent = '💀';
+    bankruptButton.style.fontSize = '40px'; 
     
-    // Crear la imagen de la calavera
-    const skullImage = document.createElement('img');
-    skullImage.src = './images/skull.png';  // Ruta de la imagen PNG
-    skullImage.alt = 'BANKARROTA';  // Texto alternativo
-    skullImage.style.width = '30px'; // Ajustar el tamaño de la imagen
-    skullImage.style.height = '30px'; // Ajustar el tamaño de la imagen
-    bankruptButton.appendChild(skullImage);  // Añadir la imagen al botón
 
     bankruptButton.onclick = showBankruptPopup;
 
