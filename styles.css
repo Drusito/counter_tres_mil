@@ -181,10 +181,6 @@ button {
     margin: 0 5px;
 }
 
-button:hover {
-    background-color: #e8c547;
-}
-
 button:disabled {
     background-color: #55555500;
     cursor: not-allowed;
