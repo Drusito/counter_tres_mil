@@ -271,3 +271,15 @@ button.current-turn {
         font-size: 24px;
     }
 }
+
+.bankrupt-button {
+    background-color: transparent; /* El fondo será transparente */
+    border: none; /* Eliminar borde */
+    padding: 0; /* Eliminar padding */
+    cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
+  }
+  
+.bankrupt-button img {
+    width: 600px; /* Establecer el tamaño de la imagen */
+    height: 600px; /* Establecer el tamaño de la imagen */
+  }
