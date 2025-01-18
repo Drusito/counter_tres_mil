@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contadores de Jugadores - Casino</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,15 +14,24 @@
   <main>
     <div id="controls">
       <label for="playerCount" id="playerCountLabel">Número de jugadores:</label>
-      <input type="number" id="playerCount" min="1" value="1">
+      <input type="number" id="playerCount" min="1" value="4">
       <button id="confirmButton" onclick="createNameInputs()">Confirmar jugadores</button>
     </div>
     <div id="nameInputs"></div>
     <button id="generateButton" onclick="generateCounters()" style="display: none;">Generar contadores</button>
     <div id="counters"></div>
-    <button id="nextTurnButton" onclick="nextTurn()" style="display: none;">&rarr;</button>
   </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button">&times;</span>
+      <p id="modal-text">¡BANKARROTA!!! JAJAJAJA</p>
+    </div>
+  </div>
+
   <footer id="footer">
+    <button onclick="showFinalScores()">Fin de partida</button>
     <p>&copy; 2025 - Casino Royale</p>
   </footer>
   <script src="script.js"></script>
