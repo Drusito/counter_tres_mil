@@ -105,6 +105,19 @@ function generateCounters() {
 }
 
 function showBankruptPopup() {
+  // Obtener el jugador cuyo turno es el actual
+  const playerIndex = currentTurn - 1;
+
+  // Obtener el contenedor de la puntuación
+  const countDisplay = document.querySelector(`#counter${currentTurn} .count`);
+
+  // Poner todas las puntuaciones del jugador a 0
+  playerScores[playerIndex] = [];  // Resetear todas las puntuaciones del jugador
+
+  // Actualizar la puntuación visual a 0
+  countDisplay.textContent = 0;
+
+  // Crear y mostrar el panel de bancarrota
   const modal = document.getElementById('modal');
   modal.style.display = 'flex';
 
@@ -119,6 +132,7 @@ function showBankruptPopup() {
     }
   };
 }
+
 
 function nextTurn(countDisplay, playerIndex) {
   // Guardar la puntuación acumulada de la ronda
