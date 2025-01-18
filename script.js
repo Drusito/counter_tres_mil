@@ -1,24 +1,26 @@
 let currentTurn = 1;  // Turno actual
 let round = 1;  // Contador de rondas
 let totalPlayers = 0;  // Número total de jugadores
+let playerScores = []; // Array para almacenar los arrays de puntuaciones de los jugadores
+let currentRoundScores = []; // Array temporal para almacenar las puntuaciones acumuladas de la ronda
 
 function createNameInputs() {
   totalPlayers = document.getElementById('playerCount').value;
   const nameInputsDiv = document.getElementById('nameInputs');
   nameInputsDiv.innerHTML = '';
+  playerScores = []; // Reiniciar puntuaciones al crear nuevos jugadores
+  currentRoundScores = []; // Reiniciar las puntuaciones de la ronda
 
   for (let i = 1; i <= totalPlayers; i++) {
-    const inputLabel = document.createElement('label');
-    
-    //inputLabel.textContent = `Nombre del Jugador ${i}:`;
-
     const inputField = document.createElement('input');
     inputField.type = 'text';
     inputField.id = `playerName${i}`;
     inputField.placeholder = `Nombre del Jugador ${i}`;
-
-    nameInputsDiv.appendChild(inputLabel);
     nameInputsDiv.appendChild(inputField);
+
+    // Inicializar las puntuaciones de los jugadores con un array vacío
+    playerScores.push([]);
+    currentRoundScores.push(0);  // Inicializar la puntuación de la ronda del jugador
   }
 
   document.getElementById('generateButton').style.display = 'block';
@@ -33,19 +35,18 @@ function generateCounters() {
   generateButton.style.display = 'none';
   countersDiv.innerHTML = '';
 
-  // Crear los contadores para cada jugador
   for (let i = 1; i <= totalPlayers; i++) {
     const playerName = document.getElementById(`playerName${i}`).value || `Jugador ${i}`;
     const counterDiv = document.createElement('div');
     counterDiv.className = 'counter';
-    counterDiv.id = `counter${i}`;  // Asignamos un ID único para cada contador
+    counterDiv.id = `counter${i}`;
 
     const title = document.createElement('h3');
     title.textContent = playerName;
     counterDiv.appendChild(title);
 
     const countDisplay = document.createElement('p');
-    countDisplay.textContent = '0';
+    countDisplay.textContent = playerScores[i - 1].reduce((a, b) => a + b, 0); // Mostrar la suma de las puntuaciones
     countDisplay.className = 'count';
     counterDiv.appendChild(countDisplay);
 
@@ -53,14 +54,16 @@ function generateCounters() {
     trashButton.classList.add('trash-button');
     trashButton.textContent = '-';
     trashButton.onclick = () => {
-      countDisplay.textContent = parseInt(countDisplay.textContent) - 50;
+      currentRoundScores[i - 1] -= 50; // Restar 50 temporalmente
+      countDisplay.textContent = currentRoundScores[i - 1]; // Mostrar puntuación temporal
     };
 
     const incrementButton = document.createElement('button');
     incrementButton.textContent = '+';
     incrementButton.classList.add('plus-button');
     incrementButton.onclick = () => {
-      countDisplay.textContent = parseInt(countDisplay.textContent) + 50;
+      currentRoundScores[i - 1] += 50; // Sumar 50 temporalmente
+      countDisplay.textContent = currentRoundScores[i - 1]; // Mostrar puntuación temporal
     };
 
     const buttonContainer = document.createElement('div');
@@ -75,20 +78,56 @@ function generateCounters() {
     nextTurnButton.className = 'next-turn-button';
     nextTurnButton.textContent = '→';
     nextTurnButton.onclick = () => {
-      nextTurn(); // Llamamos a la función de siguiente turno
+      nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
     };
-    nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';  // Mostrar solo en el turno actual
+    nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';
     counterDiv.appendChild(nextTurnButton);
+
+    // Crear el botón "X" para mostrar el modal de "BANKARROTA"
+    const bankruptButton = document.createElement('button');
+    bankruptButton.className = 'bankrupt-button';
+    bankruptButton.textContent = 'X';
+    bankruptButton.onclick = showBankruptPopup;
+
+    bankruptButton.style.position = 'absolute';
+    bankruptButton.style.top = '45%';
+    bankruptButton.style.left = '5px';
+    bankruptButton.style.transform = 'translateY(-50%) scale(0.6)';
+    counterDiv.appendChild(bankruptButton);
 
     countersDiv.appendChild(counterDiv);
   }
-
-  highlightCurrentTurn();
-  disableAllButtonsExceptCurrent();
-  document.getElementById('controls').style.display = 'none';
 }
 
-function nextTurn() {
+function showBankruptPopup() {
+  const modal = document.getElementById('modal');
+  modal.style.display = 'flex';
+
+  const closeButton = document.querySelector('.close-button');
+  closeButton.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  window.onclick = (event) => {
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  };
+}
+
+function nextTurn(countDisplay, playerIndex) {
+  // Guardar la puntuación acumulada de la ronda
+  playerScores[playerIndex].push(currentRoundScores[playerIndex]);
+
+  // Mostrar el array del jugador actual después de añadir los puntos
+  console.log(`Puntuaciones del Jugador ${playerIndex + 1}:`, playerScores[playerIndex]);
+
+  // Actualizar el contador con la suma de las puntuaciones
+  countDisplay.textContent = playerScores[playerIndex].reduce((a, b) => a + b, 0); 
+
+  // Reiniciar la puntuación temporal para la siguiente ronda
+  currentRoundScores[playerIndex] = 0;
+
   currentTurn++;
   if (currentTurn > totalPlayers) {
     currentTurn = 1;
@@ -105,10 +144,10 @@ function highlightCurrentTurn() {
     const nextTurnButton = counter.querySelector('.next-turn-button');
     if (index === currentTurn - 1) {
       counter.classList.add('current-turn');
-      nextTurnButton.style.display = 'block';  // Mostrar el botón en el turno actual
+      nextTurnButton.style.display = 'block';
     } else {
       counter.classList.remove('current-turn');
-      nextTurnButton.style.display = 'none';  // Ocultar el botón en otros turnos
+      nextTurnButton.style.display = 'none';
     }
   });
 }
@@ -123,4 +162,36 @@ function disableAllButtonsExceptCurrent() {
   currentCounterButtons.forEach(button => {
     button.disabled = false;
   });
+}
+
+// Función para mostrar la tabla de puntuaciones
+function showFinalScores() {
+  const tableDiv = document.createElement('div');
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  table.style.marginTop = '20px';
+  table.style.textAlign = 'center';
+
+  const headerRow = document.createElement('tr');
+  const playerHeader = document.createElement('th');
+  playerHeader.textContent = 'Jugador';
+  const scoreHeader = document.createElement('th');
+  scoreHeader.textContent = 'Puntuación';
+  headerRow.appendChild(playerHeader);
+  headerRow.appendChild(scoreHeader);
+  table.appendChild(headerRow);
+
+  for (let i = 1; i <= totalPlayers; i++) {
+    const row = document.createElement('tr');
+    const playerCell = document.createElement('td');
+    playerCell.textContent = document.getElementById(`playerName${i}`).value || `Jugador ${i}`;
+    const scoreCell = document.createElement('td');
+    scoreCell.textContent = playerScores[i - 1].reduce((a, b) => a + b, 0); // Sumar las puntuaciones de todas las rondas
+    row.appendChild(playerCell);
+    row.appendChild(scoreCell);
+    table.appendChild(row);
+  }
+
+  tableDiv.appendChild(table);
+  document.body.appendChild(tableDiv);
 }
