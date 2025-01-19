@@ -76,7 +76,7 @@ function generateCounters() {
     // Crear el botón "Siguiente Turno" solo en el contador del jugador cuyo turno es
     const nextTurnButton = document.createElement('button');
     nextTurnButton.className = 'next-turn-button';
-    nextTurnButton.textContent = '👉';
+    nextTurnButton.textContent = '✍️';
     nextTurnButton.onclick = () => {
       nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
     };
