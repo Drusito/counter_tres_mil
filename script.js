@@ -76,7 +76,7 @@ function generateCounters() {
     // Crear el botón "Siguiente Turno" solo en el contador del jugador cuyo turno es
     const nextTurnButton = document.createElement('button');
     nextTurnButton.className = 'next-turn-button';
-    nextTurnButton.textContent = '✍️';
+    nextTurnButton.textContent = 'ANOTAO!';
     nextTurnButton.onclick = () => {
       nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
     };
@@ -85,7 +85,7 @@ function generateCounters() {
 
     // Crear el botón "X" para mostrar el modal de "BANKARROTA" con una imagen en vez de texto
     const bankruptButton = document.createElement('button');
-    bankruptButton.classList.add('no-style');
+    // bankruptButton.classList.add('no-style');
     bankruptButton.className = 'bankrupt-button';
     bankruptButton.textContent = '💀';
     bankruptButton.style.fontSize = '40px'; 

@@ -186,20 +186,6 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* Button styles - Circular */
-button.next-turn-button {
-    background: linear-gradient(135deg, #43a047, #66bb6a); /* Degradado de verde oscuro a verde claro */
-    color: white; /* Texto blanco */
-    border: none; /* Sin borde */
-    border-radius: 12px; /* Bordes redondeados */
-    padding: 12px 24px; /* Espaciado interno */
-    font-size: 16px; /* Tamaño de fuente */
-    font-weight: bold; /* Texto en negrita */
-    font-family: 'Arial', sans-serif; /* Tipografía limpia */
-    cursor: pointer; /* Manita al pasar el cursor */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra sutil */
-    transition: all 0.3s ease; /* Transición suave para efectos */
-}
 
 button.next-turn-button:hover {
     background-color: #e8c54700;
@@ -212,27 +198,28 @@ button.current-turn {
 
 /* Estilo para un botón verde moderno y llamativo para smartphones */
 button.next-turn-button {
-    background: radial-gradient(circle, #66bb6a, #43a047); /* Degradado radial para profundidad */
+    background: radial-gradient(circle, #1c1c1c, #1c1c1c,), url('./images/skull.png'); /* Degradado radial y la imagen de fondo */
+    background-size: cover; /* Asegura que la imagen cubra todo el botón */
+    background-position: center; /* Centra la imagen en el botón */
     color: white; /* Texto blanco */
-    border: none; /* Sin borde */
-    border-radius: 50%; /* Forma circular */
+    border: 3px solid#d4af37; /* Sin borde */
+    border-radius: 100%; /* Forma circular */
     width: 60px; /* Tamaño adaptable */
-    height: 60px; /* Tamaño adaptable */
+    height: 35px; /* Tamaño adaptable */
     display: flex; /* Alinear contenido */
     justify-content: center; /* Centrar horizontalmente */
     align-items: center; /* Centrar verticalmente */
-    font-size: 24px; /* Tamaño de fuente más grande */
+    font-size: 10px; /* Tamaño de fuente más grande */
     font-weight: bold; /* Texto en negrita */
     font-family: 'Arial', sans-serif; /* Tipografía limpia */
     cursor: pointer; /* Manita al pasar el cursor */
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra más intensa */
     transition: all 0.3s ease; /* Transición suave para efectos */
     position: fixed; /* Fijo en pantalla */
-    bottom: 20px; /* Espaciado desde abajo */
-    right: 20px; /* Espaciado desde la derecha */
+    bottom: 5%; /* Espaciado desde abajo */
+    right: 30%; /* Espaciado desde la derecha */
     z-index: 1000; /* Superposición elevada */
 }
-
 /* Animación de "pulsar" para captar atención */
 button.next-turn-button::before {
     font-size: 28px;
@@ -240,20 +227,15 @@ button.next-turn-button::before {
     color: white;
 }
 
-/* Efecto hover (al pasar el cursor por encima) */
-button.next-turn-button:hover {
-    background: radial-gradient(circle, #43a047, #388e3c); /* Cambia el degradado */
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4); /* Sombra más intensa */
-    transform: scale(1.1); /* Agrandar ligeramente */
-}
 
 /* Efecto activo (al hacer clic) */
 button.next-turn-button:active {
-    background: radial-gradient(circle, #2e7d32, #388e3c); /* Verdes más oscuros */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra menos intensa */
+    background: radial-gradient(circle, #1c1c1c, #1c1c1c,), url('./images/skull.png'); /* Degradado radial y la imagen de fondo */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 1); /* Sombra menos intensa */
     transform: scale(0.95); /* Reducir ligeramente */
-}
+    border: 3px solid#d4af37; /* Sin borde */
 
+}
 /* Animación vibrante para llamar la atención */
 @keyframes pulse {
     0%, 100% {
@@ -313,10 +295,29 @@ button.next-turn-button {
     }
 
     button.next-turn-button {
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
+        background: radial-gradient(circle, #1c1c1c, #1c1c1c,), url('./images/skull.png'); /* Degradado radial y la imagen de fondo */
+        background-size: cover; /* Asegura que la imagen cubra todo el botón */
+        background-position: center; /* Centra la imagen en el botón */
+        color: white; /* Texto blanco */
+        border: 3px solid#d4af37; /* Sin borde */
+        border-radius: 100%; /* Forma circular */
+        width: 60px; /* Tamaño adaptable */
+        height: 30px; /* Tamaño adaptable */
+        display: flex; /* Alinear contenido */
+        justify-content: center; /* Centrar horizontalmente */
+        align-items: center; /* Centrar verticalmente */
+        font-size: 10px; /* Tamaño de fuente más grande */
+        font-weight: bold; /* Texto en negrita */
+        font-family: 'Arial', sans-serif; /* Tipografía limpia */
+        cursor: pointer; /* Manita al pasar el cursor */
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra más intensa */
+        transition: all 0.3s ease; /* Transición suave para efectos */
+        position: fixed; /* Fijo en pantalla */
+        bottom: 5%; /* Espaciado desde abajo */
+        right: 30%; /* Espaciado desde la derecha */
+        z-index: 1000; /* Superposición elevada */
     }
+    
 }
 
 .bankrupt-button{
@@ -340,12 +341,6 @@ button.next-turn-button {
     padding: 0; /* Eliminar padding */
     cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
   }
-  .next-turn-button:hover {
-        background-color: transparent; /* El fondo será transparente */
-        border: none; /* Eliminar borde */
-        padding: 0; /* Eliminar padding */
-        cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
-}
 
 /* Estilos para el panel de victoria */
 .victory-panel {
@@ -447,4 +442,25 @@ button.next-turn-button {
   .victory-panel button:hover {
     background-color: #333333; /* Efecto hover */
   }
-  
+  .plus-button {
+    position: relative;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50; /* Color de fondo verde */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .plus-button::before {
+    font-size: 20px; /* Tamaño del signo + */
+    margin-right: 8px; /* Espacio entre el signo + y el texto */
+  }
+
+  /* Agregar un efecto cuando se pasa el ratón sobre el botón */
+  .plus-button:hover {
+    background-color: #45a049;
+  }
