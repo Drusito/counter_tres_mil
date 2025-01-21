@@ -30,6 +30,7 @@ function generateCounters() {
   const countersDiv = document.getElementById('counters');
   const nameInputsDiv = document.getElementById('nameInputs');
   const generateButton = document.getElementById('generateButton');
+  const controls = document.getElementById('controls');
 
   nameInputsDiv.style.display = 'none';
   generateButton.style.display = 'none';
@@ -75,12 +76,18 @@ function generateCounters() {
 
     // Crear el botón "Siguiente Turno" solo en el contador del jugador cuyo turno es
     const nextTurnButton = document.createElement('button');
-    nextTurnButton.className = 'next-turn-button';
-    nextTurnButton.textContent = 'ANOTAO!';
-    nextTurnButton.onclick = () => {
-      nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
-    };
-    nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';
+nextTurnButton.className = 'next-turn-button';
+nextTurnButton.textContent = '👍';
+nextTurnButton.style.fontSize = '30px';
+nextTurnButton.style.color = '#e8c547';
+nextTurnButton.onclick = () => {
+    nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
+};
+nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';
+
+// Agregar el botón como el primer hijo de <main>
+document.querySelector('main').prepend(nextTurnButton);
+
     counterDiv.appendChild(nextTurnButton);
 
     // Crear el botón "X" para mostrar el modal de "BANKARROTA" con una imagen en vez de texto
@@ -100,6 +107,7 @@ function generateCounters() {
     counterDiv.appendChild(bankruptButton);
 
     countersDiv.appendChild(counterDiv);
+    controls.classList.add('hidden');
     disableAllButtonsExceptCurrent();
   }
 }

@@ -185,75 +185,38 @@ button:disabled {
     background-color: #55555500;
     cursor: not-allowed;
 }
-
-
-button.next-turn-button:hover {
-    background-color: #e8c54700;
+/* Next-Turn Button */
+.next-turn-button {
+    position: fixed; /* Fija el botón respecto a la ventana */
+    top: 14%; /* A 10px del borde inferior */
+    right: 40%; /* A 10px del borde derecho */
+    background: black; /* Sin fondo */
+    border: 2px solid yellow; /* Sin borde */
+    color: inherit; /* Hereda el color del texto */
+    font-size: 32px; /* Tamaño de fuente grande */
+    font-weight: bold; /* Texto en negrita */
+    padding-top: 0.1rem; /* Sin relleno */
+    cursor: pointer; /* Manita al pasar el cursor */
+    display: inline-block; /* Tamaño ajustado al texto */
+    text-align: center; /* Centra el texto */
+    line-height: 1; /* Altura de línea ajustada */
+}
+.hidden {
+    display: none; /* Oculta el elemento completamente */
+}
+.next-turn-button:hover {
+    color: #e8c547; /* Cambiar el color del texto al pasar el ratón */
+    text-decoration: underline; /* Subrayar el texto al pasar el ratón */
 }
 
-
-button.current-turn {
-    border: 2px solid #d4af37;
+.next-turn-button:active {
+    transform: scale(0.95); /* Efecto de clic al reducir ligeramente */
+    opacity: 0.9; /* Reducir opacidad al hacer clic */
 }
+
 
 /* Estilo para un botón verde moderno y llamativo para smartphones */
-button.next-turn-button {
-    background: radial-gradient(circle, #1c1c1c, #1c1c1c,), url('./images/skull.png'); /* Degradado radial y la imagen de fondo */
-    background-size: cover; /* Asegura que la imagen cubra todo el botón */
-    background-position: center; /* Centra la imagen en el botón */
-    color: white; /* Texto blanco */
-    border: 3px solid#d4af37; /* Sin borde */
-    border-radius: 100%; /* Forma circular */
-    width: 60px; /* Tamaño adaptable */
-    height: 35px; /* Tamaño adaptable */
-    display: flex; /* Alinear contenido */
-    justify-content: center; /* Centrar horizontalmente */
-    align-items: center; /* Centrar verticalmente */
-    font-size: 10px; /* Tamaño de fuente más grande */
-    font-weight: bold; /* Texto en negrita */
-    font-family: 'Arial', sans-serif; /* Tipografía limpia */
-    cursor: pointer; /* Manita al pasar el cursor */
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra más intensa */
-    transition: all 0.3s ease; /* Transición suave para efectos */
-    position: fixed; /* Fijo en pantalla */
-    bottom: 5%; /* Espaciado desde abajo */
-    right: 30%; /* Espaciado desde la derecha */
-    z-index: 1000; /* Superposición elevada */
-}
-/* Animación de "pulsar" para captar atención */
-button.next-turn-button::before {
-    font-size: 28px;
-    font-weight: bold;
-    color: white;
-}
-
-
-/* Efecto activo (al hacer clic) */
-button.next-turn-button:active {
-    background: radial-gradient(circle, #1c1c1c, #1c1c1c,), url('./images/skull.png'); /* Degradado radial y la imagen de fondo */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 1); /* Sombra menos intensa */
-    transform: scale(0.95); /* Reducir ligeramente */
-    border: 3px solid#d4af37; /* Sin borde */
-
-}
-/* Animación vibrante para llamar la atención */
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.2);
-        opacity: 0.8;
-    }
-}
-
-button.next-turn-button {
-    animation: pulse 2s infinite; /* Repetir animación de pulso */
-}
-
-
-.trash-button {
+button.trash-button {
     background-color: #9e0000;
 }
 
@@ -262,12 +225,6 @@ button.next-turn-button {
     .counter {
         width: 100px;
         max-width: 100px;
-    }
-
-    button.next-turn-button {
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
     }
 
     .counter h3 {
@@ -293,174 +250,12 @@ button.next-turn-button {
     .counter {
         width: 150px;
     }
-
-    button.next-turn-button {
-        background: radial-gradient(circle, #1c1c1c, #1c1c1c,), url('./images/skull.png'); /* Degradado radial y la imagen de fondo */
-        background-size: cover; /* Asegura que la imagen cubra todo el botón */
-        background-position: center; /* Centra la imagen en el botón */
-        color: white; /* Texto blanco */
-        border: 3px solid#d4af37; /* Sin borde */
-        border-radius: 100%; /* Forma circular */
-        width: 60px; /* Tamaño adaptable */
-        height: 30px; /* Tamaño adaptable */
-        display: flex; /* Alinear contenido */
-        justify-content: center; /* Centrar horizontalmente */
-        align-items: center; /* Centrar verticalmente */
-        font-size: 10px; /* Tamaño de fuente más grande */
-        font-weight: bold; /* Texto en negrita */
-        font-family: 'Arial', sans-serif; /* Tipografía limpia */
-        cursor: pointer; /* Manita al pasar el cursor */
-        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra más intensa */
-        transition: all 0.3s ease; /* Transición suave para efectos */
-        position: fixed; /* Fijo en pantalla */
-        bottom: 5%; /* Espaciado desde abajo */
-        right: 30%; /* Espaciado desde la derecha */
-        z-index: 1000; /* Superposición elevada */
-    }
-    
 }
 
-.bankrupt-button{
+/* Estilos adicionales */
+.bankrupt-button {
     background-color: transparent; /* El fondo será transparente */
     border: none; /* Eliminar borde */
     padding: 0; /* Eliminar padding */
     cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
-  }
-  .next-turn-button {
-    background-color: transparent; /* El fondo será transparente */
-    border: none; /* Eliminar borde */
-    padding: 0; /* Eliminar padding */
-    cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
-    font-size: 444px; /* Asegurando que el texto sea pequeño */
-
-  }
-  
-  .bankrupt-button:hover{
-    background-color: transparent; /* El fondo será transparente */
-    border: none; /* Eliminar borde */
-    padding: 0; /* Eliminar padding */
-    cursor: pointer; /* Cambiar cursor al pasar sobre el botón */
-  }
-
-/* Estilos para el panel de victoria */
-.victory-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #4CAF50;
-    color: white;
-    padding: 30px;
-    border-radius: 10px;
-    font-size: 26px;
-    font-weight: bold;
-    text-align: center;
-    z-index: 1000;
-    width: 300px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    animation: victoryAnimation 1.5s ease-out;
-  }
-  
-  .victory-panel h1 {
-    margin-bottom: 20px;
-    font-size: 32px;
-    color: #fff;
-  }
-  
-  .victory-panel .message {
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
-  
-  .victory-panel button {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .victory-panel button:hover {
-    background-color: #d32f2f;
-  }
-  
-  @keyframes victoryAnimation {
-    0% {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.5);
-    }
-    50% {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1.1);
-    }
-    100% {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-  }
-  
-  .victory-panel {
-    background: rgba(0, 0, 0, 0.9); /* Fondo oscuro translúcido */
-    color: #fff; /* Texto blanco */
-    border: 5px solid #d4af37; /* Borde dorado */
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    z-index: 1000;
-  }
-  
-  .victory-panel h1 {
-    font-size: 40px;
-    margin-bottom: 20px;
-    font-family: Arial, sans-serif;
-  }
-  
-  .victory-panel .message {
-    font-size: 25px;
-    font-family: Arial, sans-serif;
-  }
-  
-  .victory-panel button {
-    padding: 10px 20px;
-    font-size: 18px;
-    background-color: #1c1c1c; /* Fondo oscuro para el botón */
-    color: #fff; /* Texto blanco en el botón */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
-  }
-  
-  .victory-panel button:hover {
-    background-color: #333333; /* Efecto hover */
-  }
-  .plus-button {
-    position: relative;
-    padding: 10px 20px;
-    font-size: 16px;
-    background-color: #4CAF50; /* Color de fondo verde */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .plus-button::before {
-    font-size: 20px; /* Tamaño del signo + */
-    margin-right: 8px; /* Espacio entre el signo + y el texto */
-  }
-
-  /* Agregar un efecto cuando se pasa el ratón sobre el botón */
-  .plus-button:hover {
-    background-color: #45a049;
-  }
+}
