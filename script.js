@@ -78,17 +78,16 @@ function generateCounters() {
     const nextTurnButton = document.createElement('button');
 nextTurnButton.className = 'next-turn-button';
 nextTurnButton.textContent = '👍';
-nextTurnButton.style.fontSize = '30px';
-nextTurnButton.style.color = '#e8c547';
+nextTurnButton.style.fontSize = '40px';
 nextTurnButton.onclick = () => {
     nextTurn(countDisplay, i - 1); // Llamamos a la función de siguiente turno y pasamos el índice
 };
 nextTurnButton.style.display = i === currentTurn ? 'block' : 'none';
 
 // Agregar el botón como el primer hijo de <main>
-document.querySelector('main').prepend(nextTurnButton);
+document.querySelector('main').appendChild(nextTurnButton);
 
-    counterDiv.appendChild(nextTurnButton);
+countersDiv.insertAdjacentElement('afterend', nextTurnButton);
 
     // Crear el botón "X" para mostrar el modal de "BANKARROTA" con una imagen en vez de texto
     const bankruptButton = document.createElement('button');
