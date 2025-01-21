@@ -188,35 +188,88 @@ button:disabled {
 
 /* Button styles - Circular */
 button.next-turn-button {
-    background-color: #d4af3700;
-    width: 30px;  /* Ajuste para un tamaño más pequeño */
-    height: 30px; /* Hacemos el botón más pequeño */
-    padding: 0;  /* Eliminar cualquier relleno adicional */
-    border: none;
-    border-radius: 50%; /* Mantenerlo circular */
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    position: absolute;
-    top: 45%;
-    right: 5px; /* Posicionar el botón a la derecha */
-    transform: translateY(-50%) scale(0.6); /* Reducir el tamaño usando scale */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0; /* Reducir espacio adicional */
+    background: linear-gradient(135deg, #43a047, #66bb6a); /* Degradado de verde oscuro a verde claro */
+    color: white; /* Texto blanco */
+    border: none; /* Sin borde */
+    border-radius: 12px; /* Bordes redondeados */
+    padding: 12px 24px; /* Espaciado interno */
+    font-size: 16px; /* Tamaño de fuente */
+    font-weight: bold; /* Texto en negrita */
+    font-family: 'Arial', sans-serif; /* Tipografía limpia */
+    cursor: pointer; /* Manita al pasar el cursor */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+    transition: all 0.3s ease; /* Transición suave para efectos */
 }
 
 button.next-turn-button:hover {
     background-color: #e8c54700;
 }
 
+
 button.current-turn {
     border: 2px solid #d4af37;
 }
 
-.plus-button {
-    background-color: #28a745;
+/* Estilo para un botón verde moderno y llamativo para smartphones */
+button.next-turn-button {
+    background: radial-gradient(circle, #66bb6a, #43a047); /* Degradado radial para profundidad */
+    color: white; /* Texto blanco */
+    border: none; /* Sin borde */
+    border-radius: 50%; /* Forma circular */
+    width: 60px; /* Tamaño adaptable */
+    height: 60px; /* Tamaño adaptable */
+    display: flex; /* Alinear contenido */
+    justify-content: center; /* Centrar horizontalmente */
+    align-items: center; /* Centrar verticalmente */
+    font-size: 24px; /* Tamaño de fuente más grande */
+    font-weight: bold; /* Texto en negrita */
+    font-family: 'Arial', sans-serif; /* Tipografía limpia */
+    cursor: pointer; /* Manita al pasar el cursor */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra más intensa */
+    transition: all 0.3s ease; /* Transición suave para efectos */
+    position: fixed; /* Fijo en pantalla */
+    bottom: 20px; /* Espaciado desde abajo */
+    right: 20px; /* Espaciado desde la derecha */
+    z-index: 1000; /* Superposición elevada */
 }
+
+/* Animación de "pulsar" para captar atención */
+button.next-turn-button::before {
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+}
+
+/* Efecto hover (al pasar el cursor por encima) */
+button.next-turn-button:hover {
+    background: radial-gradient(circle, #43a047, #388e3c); /* Cambia el degradado */
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4); /* Sombra más intensa */
+    transform: scale(1.1); /* Agrandar ligeramente */
+}
+
+/* Efecto activo (al hacer clic) */
+button.next-turn-button:active {
+    background: radial-gradient(circle, #2e7d32, #388e3c); /* Verdes más oscuros */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra menos intensa */
+    transform: scale(0.95); /* Reducir ligeramente */
+}
+
+/* Animación vibrante para llamar la atención */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+button.next-turn-button {
+    animation: pulse 2s infinite; /* Repetir animación de pulso */
+}
+
 
 .trash-button {
     background-color: #9e0000;
