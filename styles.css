@@ -187,22 +187,20 @@ button:disabled {
 }
 /* Next-Turn Button */
 .next-turn-button {
-    display: block; /* Asegura que se trate como un bloque */
-    margin: 1rem auto; /* Centra horizontalmente */
-    background: black;
-    border: 2px solid yellow;
-    color: white;
-    font-size: 1.5rem; /* Ajusta el tamaño para smartphones */
-    font-weight: bold;
-    padding-top: 0.1rem;
-    padding-bottom: 0.8rem;
-    text-align: center;
-    cursor: pointer;
-    max-width: 100%; /* Asegura que no se desborde en pantallas pequeñas */
-    box-sizing: border-box;
+    position: fixed; /* Fija el botón respecto a la ventana */
+    top: 14%; /* A 10px del borde inferior */
+    right: 40%; /* A 10px del borde derecho */
+    background: black; /* Sin fondo */
+    border: 2px solid yellow; /* Sin borde */
+    color: inherit; /* Hereda el color del texto */
+    font-size: 32px; /* Tamaño de fuente grande */
+    font-weight: bold; /* Texto en negrita */
+    padding-top: 0.1rem; /* Sin relleno */
+    cursor: pointer; /* Manita al pasar el cursor */
+    display: inline-block; /* Tamaño ajustado al texto */
+    text-align: center; /* Centra el texto */
+    line-height: 1; /* Altura de línea ajustada */
 }
-
-
 .hidden {
     display: none; /* Oculta el elemento completamente */
 }
