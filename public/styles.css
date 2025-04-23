@@ -9,6 +9,7 @@
     --success-color: #28a745;
     --warning-color: #ffc107;
     --danger-color: #dc3545;
+    --info-color: #17a2b8;
     --border-radius: 10px;
     --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     --transition: all 0.3s ease;
@@ -136,6 +137,23 @@
     transform: translateY(-2px);
   }
   
+  .btn-info {
+    background-color: var(--info-color);
+    color: var(--text-color);
+  }
+  
+  .btn-info:hover:not(:disabled) {
+    background-color: #138496;
+    transform: translateY(-2px);
+  }
+  
+  .btn-large {
+    padding: 16px 32px;
+    font-size: 18px;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  
   /* Formularios */
   input[type="text"], input[type="number"] {
     padding: 12px 16px;
@@ -172,6 +190,12 @@
     gap: 12px;
   }
   
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  
   /* Pantalla de inicio */
   #welcome-screen .logo-container {
     margin-bottom: 40px;
@@ -188,6 +212,21 @@
   #welcome-screen .tagline {
     font-size: 18px;
     opacity: 0.8;
+  }
+  
+  /* Pantalla de modo offline */
+  #offline-player-inputs {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .player-input {
+    margin-bottom: 10px;
+  }
+  
+  #start-offline-game {
+    margin-bottom: 16px;
   }
   
   /* Sala de espera */
@@ -331,6 +370,7 @@
     padding: 16px;
     box-shadow: var(--box-shadow);
     margin-top: auto;
+    margin-bottom: 16px;
   }
   
   .score-controls, .action-controls {
@@ -342,6 +382,13 @@
   .score-controls button, .action-controls button {
     flex: 1;
     margin: 0 8px;
+  }
+  
+  .exit-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
   }
   
   /* Modal */
