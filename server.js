@@ -103,7 +103,8 @@ io.on('connection', (socket) => {
       roomId: roomId,
       player: gameRooms[roomId].players[playerIndex],
       isCreator: false,
-      players: gameRooms[roomId].players
+      players: gameRooms[roomId].players,
+      creatorId: gameRooms[roomId].creator
     });
 
     // Notificar a todos los jugadores en la sala
@@ -229,48 +230,60 @@ io.on('connection', (socket) => {
     nextTurn(roomId);
   });
 
-  // Evento para finalizar turno
-  socket.on('finishTurn', () => {
-    const roomId = socket.roomId;
-    const playerIndex = socket.playerIndex;
-    
-    if (!roomId || !gameRooms[roomId] || playerIndex === undefined) {
-      socket.emit('error', { message: 'No estás en una sala válida' });
-      return;
-    }
+// Evento para finalizar turno
+socket.on('finishTurn', () => {
+  const roomId = socket.roomId;
+  const playerIndex = socket.playerIndex;
+  
+  if (!roomId || !gameRooms[roomId] || playerIndex === undefined) {
+    socket.emit('error', { message: 'No estás en una sala válida' });
+    return;
+  }
 
-    // Verificar si es el turno del jugador
-    if (gameRooms[roomId].currentTurn !== playerIndex) {
-      socket.emit('error', { message: 'No es tu turno' });
-      return;
-    }
+  // Verificar si es el turno del jugador
+  if (gameRooms[roomId].currentTurn !== playerIndex) {
+    socket.emit('error', { message: 'No es tu turno' });
+    return;
+  }
 
-    const player = gameRooms[roomId].players[playerIndex];
+  const player = gameRooms[roomId].players[playerIndex];
+  
+  // Guardar puntuación de la ronda
+  player.scores.push(player.currentRoundScore);
+  player.totalScore = player.scores.reduce((a, b) => a + b, 0);
+  player.currentRoundScore = 0;
+  
+  // Avanzar turno
+  gameRooms[roomId].currentTurn++;
+  
+  // Si hemos completado una ronda
+  if (gameRooms[roomId].currentTurn >= gameRooms[roomId].players.length) {
+    // Comprobar victoria al final de la ronda
+    const winnerResult = checkVictoryCondition(roomId);
     
-    // Guardar puntuación de la ronda
-    player.scores.push(player.currentRoundScore);
-    player.totalScore = player.scores.reduce((a, b) => a + b, 0);
-    player.currentRoundScore = 0;
-    
-    // Comprobar victoria
-    if (player.totalScore >= 3000) {
-      io.to(roomId).emit('gameWon', {
-        winner: player,
+    // Solo avanzar a la siguiente ronda si no hubo ganador
+    if (!winnerResult) {
+      gameRooms[roomId].currentTurn = 0;
+      gameRooms[roomId].round++;
+      
+      // Notificar a todos los jugadores el cambio de turno
+      io.to(roomId).emit('turnChanged', {
+        currentPlayerIndex: gameRooms[roomId].currentTurn,
+        currentPlayer: gameRooms[roomId].players[gameRooms[roomId].currentTurn],
+        round: gameRooms[roomId].round,
         players: gameRooms[roomId].players
       });
-      
-      // Reiniciar sala para nueva partida
-      setTimeout(() => {
-        delete gameRooms[roomId];
-      }, 10000);
-      
-      return;
     }
-    
-    // Avanzar turno
-    nextTurn(roomId);
-  });
-
+  } else {
+    // Notificar a todos los jugadores el cambio de turno
+    io.to(roomId).emit('turnChanged', {
+      currentPlayerIndex: gameRooms[roomId].currentTurn,
+      currentPlayer: gameRooms[roomId].players[gameRooms[roomId].currentTurn],
+      round: gameRooms[roomId].round,
+      players: gameRooms[roomId].players
+    });
+  }
+});
   // Evento para abandonar sala/desconexión
   socket.on('disconnect', () => {
     handlePlayerDisconnect(socket);
@@ -278,9 +291,39 @@ io.on('connection', (socket) => {
 
   socket.on('leaveRoom', () => {
     handlePlayerDisconnect(socket);
+    socket.emit('leftRoom');
   });
 });
 
+// Función para comprobar victoria
+function checkVictoryCondition(roomId) {
+  if (!gameRooms[roomId]) return false;
+  
+  // Buscar jugadores con más de 3000 puntos
+  const winners = gameRooms[roomId].players.filter(player => player.totalScore >= 3000);
+  
+  // Si hay ganadores, determinar el ganador final (mayor puntuación)
+  if (winners.length > 0) {
+    // Si hay varios con más de 3000, el ganador es el que tenga mayor puntuación
+    const winner = winners.reduce((highest, player) => 
+      player.totalScore > highest.totalScore ? player : highest, winners[0]);
+    
+    // Notificar a todos los jugadores
+    io.to(roomId).emit('gameWon', {
+      winner: winner,
+      players: gameRooms[roomId].players
+    });
+    
+    // Reiniciar sala para nueva partida después de 10 segundos
+    setTimeout(() => {
+      delete gameRooms[roomId];
+    }, 10000);
+    
+    return true; // Indicar que hay un ganador
+  }
+  
+  return false; // Indicar que no hay ganador
+}
 // Función para avanzar al siguiente turno
 function nextTurn(roomId) {
   if (!gameRooms[roomId]) return;
