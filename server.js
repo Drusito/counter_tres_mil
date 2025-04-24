@@ -5,56 +5,15 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+require('dotenv').config();
+
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
 // Función para verificar el estado de Firebase y registrar detalles
-async function checkFirebaseConnection() {
-  console.log('=====================================');
-  console.log('VERIFICANDO CONEXIÓN A FIREBASE');
-  console.log('=====================================');
-  
-  try {
-    if (!db) {
-      console.error('❌ ERROR: Instancia de base de datos no inicializada');
-      return false;
-    }
-    
-    // Intentar una operación simple de lectura para verificar conectividad
-    console.log('Probando conexión a Firebase...');
-    const ref = db.ref('.info/connected');
-    const snapshot = await ref.once('value');
-    const connected = snapshot.val() === true;
-    
-    if (connected) {
-      console.log('✅ Conexión a Firebase ACTIVA');
-      
-      // Probar obtener datos de prueba
-      console.log('Intentando leer datos de prueba...');
-      
-      // Intentar leer historial de partidas
-      const games = await getGameHistory(1);
-      console.log(`- Recuperación de historial: ${games.length > 0 ? '✅ OK' : '❓ Sin datos'}`);
-      
-      // Intentar leer estadísticas de jugadores
-      const players = await getPlayerStats();
-      console.log(`- Recuperación de estadísticas: ${players.length > 0 ? '✅ OK' : '❓ Sin datos'}`);
-      
-      console.log('Pruebas de lectura completadas');
-      return true;
-    } else {
-      console.error('❌ ERROR: No se pudo conectar a Firebase');
-      return false;
-    }
-  } catch (error) {
-    console.error('❌ ERROR al verificar conexión a Firebase:', error);
-    return false;
-  } finally {
-    console.log('=====================================');
-  }
-}
+
 
 // Agregar esta función para mostrar detalles de la solicitud
 function logRequestDetails(req, res, next) {
@@ -596,13 +555,8 @@ function generateRoomId() {
 }
 
 // Iniciar servidor
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
+console.log(process.env.FIREBASE_CONFIG);
 server.listen(PORT, () => {
   console.log(`Servidor del juego de casino corriendo en puerto ${PORT}`);
-  
-  // Verificar conexión a Firebase al iniciar
-  checkFirebaseConnection()
-    .then(connected => {
-      console.log(`Estado de Firebase al iniciar servidor: ${connected ? 'Conectado ✅' : 'Desconectado ❌'}`);
-    });
 });
