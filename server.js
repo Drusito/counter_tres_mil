@@ -1,6 +1,6 @@
 // Servidor Socket.io para el juego de casino
 
-const { getGameHistory, getPlayerStats, registerGame } = require('./firebase-config');
+const { getGameHistory, getPlayerStats, registerGame, db } = require('./firebase-config');
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -16,6 +16,77 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Rutas
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/api/check-database', async (req, res) => {
+  try {
+    console.log('Verificando conexión a Firebase...');
+    
+    if (!db) {
+      return res.status(500).json({ 
+        connected: false, 
+        message: 'Instancia de base de datos no inicializada' 
+      });
+    }
+    
+    // Intentar una operación simple de lectura
+    const ref = db.ref('.info/connected');
+    const snapshot = await ref.once('value');
+    const connected = snapshot.val() === true;
+    
+    if (connected) {
+      console.log('✅ Conexión a Firebase establecida correctamente');
+      return res.json({ 
+        connected: true, 
+        message: 'Conexión a Firebase establecida correctamente' 
+      });
+    } else {
+      console.log('❌ No se pudo conectar a Firebase');
+      return res.status(503).json({ 
+        connected: false, 
+        message: 'No se pudo conectar a Firebase' 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error al verificar conexión a Firebase:', error);
+    return res.status(500).json({ 
+      connected: false, 
+      error: error.message,
+      message: 'Error al verificar conexión a Firebase' 
+    });
+  }
+});
+
+// También puedes añadir un endpoint para comprobar específicamente que funciona la recuperación de datos
+app.get('/api/check-data-retrieval', async (req, res) => {
+  try {
+    console.log('Probando recuperación de datos...');
+    
+    // Intentar obtener datos reales
+    const start = Date.now();
+    const games = await getGameHistory(1);
+    const players = await getPlayerStats();
+    const end = Date.now();
+    
+    return res.json({
+      success: true,
+      message: 'Recuperación de datos correcta',
+      timing: {
+        total: `${end - start}ms`,
+      },
+      stats: {
+        gamesRetrieved: games.length,
+        playersRetrieved: players.length
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error al probar recuperación de datos:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Error al recuperar datos de Firebase'
+    });
+  }
 });
 
 // Estructura para almacenar información de salas de juego
