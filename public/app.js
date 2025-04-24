@@ -28,6 +28,11 @@ function showScreen(screenId) {
   if (screenToShow) {
     screenToShow.classList.remove('hidden');
   }
+  
+  // Si es la pantalla de estadísticas, cargar datos
+  if (screenId === 'stats') {
+    loadStats();
+  }
 }
 
 // Función para crear inputs de jugadores en modo offline
@@ -415,6 +420,146 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
+// Funciones para la pantalla de estadísticas
+function showStatsTab(tabName) {
+  // Ocultar todas las pestañas
+  document.querySelectorAll('.stats-tab').forEach(tab => {
+    tab.classList.add('hidden');
+  });
+  
+  // Restablecer estado activo de los botones
+  document.querySelectorAll('.stats-tab-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Mostrar la pestaña seleccionada
+  document.getElementById(tabName + '-tab').classList.remove('hidden');
+  
+  // Marcar el botón como activo
+  document.getElementById(tabName + '-tab-btn').classList.add('active');
+}
+
+// Función para cargar estadísticas
+function loadStats() {
+  // Mostrar indicadores de carga
+  document.getElementById('history-loading').style.display = 'flex';
+  document.getElementById('players-loading').style.display = 'flex';
+  
+  // Ocultar contenedores de datos
+  document.getElementById('game-history-list').innerHTML = '';
+  document.getElementById('players-stats-list').innerHTML = '';
+  
+  // Solicitar datos al servidor
+  socket.emit('getStats', (response) => {
+    // Ocultar indicadores de carga
+    document.getElementById('history-loading').style.display = 'none';
+    document.getElementById('players-loading').style.display = 'none';
+    
+    if (response.success) {
+      renderGameHistory(response.gameHistory);
+      renderPlayerStats(response.playerStats);
+    } else {
+      showNotification('Error al cargar estadísticas', 'error');
+    }
+  });
+}
+
+// Función para renderizar historial de partidas
+function renderGameHistory(games) {
+  const container = document.getElementById('game-history-list');
+  
+  if (!games || games.length === 0) {
+    container.innerHTML = '<div class="no-data-message">No hay partidas registradas todavía</div>';
+    return;
+  }
+  
+  // Crear elementos para cada partida
+  games.forEach(game => {
+    const gameItem = document.createElement('div');
+    gameItem.className = 'game-history-item';
+    
+    // Formatear fecha
+    const gameDate = new Date(game.endTime);
+    const formattedDate = gameDate.toLocaleDateString() + ' ' + gameDate.toLocaleTimeString();
+    
+    gameItem.innerHTML = `
+      <div class="game-history-header">
+        <div class="game-history-title">Partida #${game.id}</div>
+        <div class="game-history-date">${formattedDate}</div>
+      </div>
+      <div class="game-history-winner">
+        <span class="winner-icon"><i class="fas fa-trophy"></i></span>
+        <span>${game.winner.name} ganó con ${game.winner.totalScore} puntos</span>
+      </div>
+      <div>Rondas: ${game.totalRounds}</div>
+      <div class="game-history-players">
+        ${game.players.map(player => `
+          <div class="game-history-player ${player.id === game.winner.id ? 'winner' : ''}">
+            <i class="fas fa-user"></i> ${player.name}: ${player.totalScore} pts
+          </div>
+        `).join('')}
+      </div>
+    `;
+    
+    container.appendChild(gameItem);
+  });
+}
+
+// Función para renderizar estadísticas de jugadores
+function renderPlayerStats(players) {
+  const container = document.getElementById('players-stats-list');
+  
+  if (!players || players.length === 0) {
+    container.innerHTML = '<div class="no-data-message">No hay estadísticas de jugadores todavía</div>';
+    return;
+  }
+  
+  // Crear elementos para cada jugador
+  players.forEach((player, index) => {
+    const playerItem = document.createElement('div');
+    playerItem.className = 'player-stats-item';
+    
+    // Calcular porcentaje de victorias
+    const winRate = player.totalGames > 0 
+      ? Math.round((player.wins / player.totalGames) * 100) 
+      : 0;
+    
+    // Calcular puntuación media
+    const avgScore = player.totalGames > 0 
+      ? Math.round(player.totalScore / player.totalGames) 
+      : 0;
+    
+    playerItem.innerHTML = `
+      <div class="player-stats-header">
+        <div class="player-stats-name">
+          <span class="rank-number">#${index + 1}</span>
+          <i class="fas fa-user"></i> ${player.name}
+        </div>
+      </div>
+      <div class="player-stats-details">
+        <div class="player-stat">
+          <div class="player-stat-value">${player.wins}</div>
+          <div class="player-stat-label">Victorias</div>
+        </div>
+        <div class="player-stat">
+          <div class="player-stat-value">${player.totalGames}</div>
+          <div class="player-stat-label">Partidas</div>
+        </div>
+        <div class="player-stat">
+          <div class="player-stat-value">${winRate}%</div>
+          <div class="player-stat-label">% Victoria</div>
+        </div>
+        <div class="player-stat">
+          <div class="player-stat-value">${avgScore}</div>
+          <div class="player-stat-label">Pts. Media</div>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(playerItem);
+  });
+}
+
 // Eventos de socket
 socket.on('roomCreated', function(data) {
   gameState.roomId = data.roomId;
@@ -539,14 +684,4 @@ socket.on('gameWon', function(data) {
   if (data.winner.id === socket.id) {
     document.body.classList.add('shimmer');
   }
-});
-
-socket.on('error', function(data) {
-  showNotification(data.message, 'error');
-});
-
-// Inicializar mostrando la pantalla principal al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM cargado, iniciando aplicación...');
-  showScreen('main-menu');
 });
