@@ -1,4 +1,6 @@
 // Servidor Socket.io para el juego de casino
+
+const { getGameHistory, getPlayerStats, registerGame } = require('./firebase-config');
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -284,6 +286,30 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Evento para obtener historial de partidas
+socket.on('getGameHistory', async () => {
+  try {
+    console.log(`Solicitando historial de partidas para ${socket.id}`);
+    const gameHistory = await getGameHistory(20); // Obtener últimas 20 partidas
+    socket.emit('gameHistoryData', gameHistory);
+  } catch (error) {
+    console.error('Error al obtener historial de partidas:', error);
+    socket.emit('gameHistoryData', []);
+  }
+});
+
+// Evento para obtener estadísticas de jugadores
+socket.on('getPlayerStats', async () => {
+  try {
+    console.log(`Solicitando estadísticas de jugadores para ${socket.id}`);
+    const playerStats = await getPlayerStats();
+    socket.emit('playerStatsData', playerStats);
+  } catch (error) {
+    console.error('Error al obtener estadísticas de jugadores:', error);
+    socket.emit('playerStatsData', []);
+  }
+});
+
   // Evento para abandonar sala/desconexión
   socket.on('disconnect', () => {
     handlePlayerDisconnect(socket);
@@ -295,7 +321,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Función para comprobar victoria
 function checkVictoryCondition(roomId) {
   if (!gameRooms[roomId]) return false;
   
@@ -307,6 +332,20 @@ function checkVictoryCondition(roomId) {
     // Si hay varios con más de 3000, el ganador es el que tenga mayor puntuación
     const winner = winners.reduce((highest, player) => 
       player.totalScore > highest.totalScore ? player : highest, winners[0]);
+    
+    // Guardar la partida en Firebase
+    const gameData = {
+      id: roomId,
+      players: gameRooms[roomId].players,
+      winner: winner,
+      rounds: gameRooms[roomId].round,
+      timestamp: Date.now()
+    };
+    
+    // Registrar la partida (función asíncrona, no es necesario esperar)
+    registerGame(gameData)
+      .then(id => console.log(`Partida guardada con ID: ${id}`))
+      .catch(error => console.error('Error al guardar partida:', error));
     
     // Notificar a todos los jugadores
     io.to(roomId).emit('gameWon', {

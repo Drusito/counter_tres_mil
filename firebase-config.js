@@ -19,18 +19,15 @@ const serviceAccount = {
 let db;
 
 try {
-  // Inicializar la aplicación de Firebase
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://tresmill-default-rtdb.europe-west1.firebasedatabase.app"
   });
 
-  // Obtener referencia a la base de datos
   db = admin.database();
   console.log('Conexión a Firebase establecida correctamente.');
 } catch (error) {
   console.error('Error al inicializar Firebase:', error);
-  // Creamos un objeto simulado para no romper el flujo
   db = {
     ref: () => ({
       push: async () => ({ key: 'offline-' + Date.now() }),
@@ -54,20 +51,20 @@ try {
   };
 }
 
-// Función para registrar una partida completa
 async function registerGame(gameData) {
   try {
-    // Si no hay base de datos, salir silenciosamente
     if (!db) return null;
-    
-    // Guardar la partida en la colección de games
+
     const gamesRef = db.ref('games');
     const newGameRef = await gamesRef.push(gameData);
+
+    // Añadir ID al gameData antes de actualizar estadísticas
+    gameData.id = newGameRef.key;
+
     console.log('Partida registrada con ID:', newGameRef.key);
-    
-    // Actualizar estadísticas de los jugadores
+
     await updatePlayerStats(gameData);
-    
+
     return newGameRef.key;
   } catch (error) {
     console.error('Error al registrar partida:', error);
@@ -75,28 +72,22 @@ async function registerGame(gameData) {
   }
 }
 
-// Función para actualizar estadísticas de jugadores
 async function updatePlayerStats(gameData) {
   try {
-    // Si no hay base de datos, salir silenciosamente
     if (!db) return;
-    
+
     const playersRef = db.ref('players');
-    
-    // Procesar cada jugador
+
     for (const player of gameData.players) {
-      // Asegurarnos de que el jugador tiene un nombre
       if (!player.name) continue;
-      
+
       const playerName = player.name;
       const isWinner = player.id === gameData.winner.id;
       const score = player.totalScore;
-      
-      // Referencia al jugador en la base de datos
+
       const playerRef = playersRef.child(encodePlayerName(playerName));
-      
-      // Obtener datos actuales o crear nuevo perfil
       const snapshot = await playerRef.once('value');
+
       const playerData = snapshot.exists() ? snapshot.val() : {
         name: playerName,
         totalGames: 0,
@@ -106,25 +97,21 @@ async function updatePlayerStats(gameData) {
         lowestScore: score > 0 ? score : 0,
         gamesPlayed: []
       };
-      
-      // Actualizar datos
+
       playerData.totalGames += 1;
       if (isWinner) playerData.wins += 1;
       playerData.totalScore += score;
       playerData.highestScore = Math.max(playerData.highestScore, score);
-      
-      // Sólo actualizar lowestScore si el jugador tiene puntos (para evitar que bancarrotas afecten esta estadística)
+
       if (score > 0) {
         if (playerData.lowestScore === 0 || score < playerData.lowestScore) {
           playerData.lowestScore = score;
         }
       }
-      
-      // Añadir ID del juego a la lista de partidas jugadas
+
       if (!playerData.gamesPlayed) playerData.gamesPlayed = [];
       playerData.gamesPlayed.push(gameData.id);
-      
-      // Guardar datos actualizados
+
       await playerRef.set(playerData);
     }
   } catch (error) {
@@ -132,24 +119,21 @@ async function updatePlayerStats(gameData) {
   }
 }
 
-// Función para recuperar el historial de partidas
 async function getGameHistory(limit = 10) {
   try {
-    // Si no hay base de datos, devolver un array vacío
     if (!db) return [];
-    
+
     const gamesRef = db.ref('games');
     const snapshot = await gamesRef.orderByChild('timestamp').limitToLast(limit).once('value');
     const games = [];
-    
+
     snapshot.forEach(childSnapshot => {
       games.push({
         id: childSnapshot.key,
         ...childSnapshot.val()
       });
     });
-    
-    // Ordenar del más reciente al más antiguo
+
     return games.reverse();
   } catch (error) {
     console.error('Error al obtener historial de partidas:', error);
@@ -157,21 +141,18 @@ async function getGameHistory(limit = 10) {
   }
 }
 
-// Función para obtener estadísticas de jugadores
 async function getPlayerStats() {
   try {
-    // Si no hay base de datos, devolver un array vacío
     if (!db) return [];
-    
+
     const playersRef = db.ref('players');
     const snapshot = await playersRef.orderByChild('wins').once('value');
     const players = [];
-    
+
     snapshot.forEach(childSnapshot => {
       players.push(childSnapshot.val());
     });
-    
-    // Ordenar por victorias (más a menos)
+
     return players.sort((a, b) => b.wins - a.wins);
   } catch (error) {
     console.error('Error al obtener estadísticas de jugadores:', error);
@@ -179,9 +160,7 @@ async function getPlayerStats() {
   }
 }
 
-// Función auxiliar para codificar nombres de jugadores (para usar como keys)
 function encodePlayerName(name) {
-  // Reemplazar caracteres no permitidos en claves de Firebase
   return name.replace(/[.#$/[\]]/g, '_');
 }
 
