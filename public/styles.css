@@ -852,3 +852,67 @@
       justify-content: center;
     }
   }
+
+  /* Añade estos estilos al final de tu archivo styles.css */
+
+/* Pantalla de historial */
+.history-container {
+  width: 100%;
+  max-width: 800px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: var(--box-shadow);
+  overflow-x: auto;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text-color);
+}
+
+.history-table th, 
+.history-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-table th {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--primary-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.history-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.loading, .error, .empty-history {
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.error {
+  color: var(--danger-color);
+}
+
+/* Responsive para tablas */
+@media (max-width: 768px) {
+  .history-table {
+    font-size: 14px;
+  }
+  
+  .history-table th, 
+  .history-table td {
+    padding: 8px;
+  }
+}

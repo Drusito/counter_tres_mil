@@ -3,24 +3,6 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
-let firebase;
-
-try {
-  // Intentamos importar la configuración de Firebase
-  // Si falla, continuamos sin Firebase
-  firebase = require('./firebase-config');
-  console.log('Firebase inicializado correctamente');
-} catch (error) {
-  console.warn('No se pudo inicializar Firebase:', error.message);
-  console.log('El servidor funcionará sin estadísticas');
-  
-  // Crear funciones dummy para evitar errores
-  firebase = {
-    registerGame: async () => null,
-    getGameHistory: async () => [],
-    getPlayerStats: async () => []
-  };
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -32,29 +14,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Rutas
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// API para obtener historial de partidas
-app.get('/api/games/history', async (req, res) => {
-  try {
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const history = await firebase.getGameHistory(limit);
-    res.json(history);
-  } catch (error) {
-    console.error('Error al obtener historial:', error);
-    res.status(500).json({ error: 'Error al obtener historial de partidas' });
-  }
-});
-
-// API para obtener estadísticas de jugadores
-app.get('/api/players/stats', async (req, res) => {
-  try {
-    const stats = await firebase.getPlayerStats();
-    res.json(stats);
-  } catch (error) {
-    console.error('Error al obtener estadísticas:', error);
-    res.status(500).json({ error: 'Error al obtener estadísticas de jugadores' });
-  }
 });
 
 // Estructura para almacenar información de salas de juego
@@ -83,8 +42,7 @@ io.on('connection', (socket) => {
       currentTurn: 0,
       round: 1,
       gameStarted: false,
-      maxPlayers: data.maxPlayers || 8,
-      startTime: new Date().toISOString() // Registrar tiempo de inicio
+      maxPlayers: data.maxPlayers || 8
     };
 
     // Unir al creador a la sala
@@ -176,7 +134,6 @@ io.on('connection', (socket) => {
     // Iniciar juego
     gameRooms[roomId].gameStarted = true;
     gameRooms[roomId].currentTurn = 0; // El primer jugador comienza
-    gameRooms[roomId].startTime = new Date().toISOString(); // Actualizar tiempo de inicio
     
     // Notificar a todos los jugadores que el juego ha comenzado
     io.to(roomId).emit('gameStarted', {
@@ -297,16 +254,15 @@ io.on('connection', (socket) => {
     player.currentRoundScore = 0;
     
     // Avanzar turno
-    gameRooms[roomId].currentTurn++;
+    gameRooms[roomId].currentTurn = (gameRooms[roomId].currentTurn + 1) % gameRooms[roomId].players.length;
     
-    // Si hemos completado una ronda
-    if (gameRooms[roomId].currentTurn >= gameRooms[roomId].players.length) {
+    // Si hemos completado una ronda (el turno vuelve al primer jugador)
+    if (gameRooms[roomId].currentTurn === 0) {
       // Comprobar victoria al final de la ronda
       const winnerResult = checkVictoryCondition(roomId);
       
       // Solo avanzar a la siguiente ronda si no hubo ganador
       if (!winnerResult) {
-        gameRooms[roomId].currentTurn = 0;
         gameRooms[roomId].round++;
         
         // Notificar a todos los jugadores el cambio de turno
@@ -337,30 +293,10 @@ io.on('connection', (socket) => {
     handlePlayerDisconnect(socket);
     socket.emit('leftRoom');
   });
-  
-  // Evento para obtener estadísticas
-  socket.on('getStats', async (callback) => {
-    try {
-      const gameHistory = await firebase.getGameHistory(10); // Últimas 10 partidas
-      const playerStats = await firebase.getPlayerStats();
-      
-      callback({
-        success: true,
-        gameHistory,
-        playerStats
-      });
-    } catch (error) {
-      console.error('Error al obtener estadísticas:', error);
-      callback({
-        success: false,
-        error: 'Error al obtener estadísticas'
-      });
-    }
-  });
 });
 
 // Función para comprobar victoria
-async function checkVictoryCondition(roomId) {
+function checkVictoryCondition(roomId) {
   if (!gameRooms[roomId]) return false;
   
   // Buscar jugadores con más de 3000 puntos
@@ -371,25 +307,6 @@ async function checkVictoryCondition(roomId) {
     // Si hay varios con más de 3000, el ganador es el que tenga mayor puntuación
     const winner = winners.reduce((highest, player) => 
       player.totalScore > highest.totalScore ? player : highest, winners[0]);
-    
-    try {
-      // Crear datos de la partida para Firebase
-      const gameData = {
-        id: roomId,
-        winner: winner,
-        players: gameRooms[roomId].players,
-        totalRounds: gameRooms[roomId].round,
-        startTime: gameRooms[roomId].startTime,
-        endTime: new Date().toISOString(),
-        timestamp: Date.now()
-      };
-      
-      // Registrar la partida en Firebase
-      await firebase.registerGame(gameData);
-    } catch (error) {
-      console.error('Error al registrar partida en Firebase:', error);
-      // Continuamos con el juego aunque falle el registro
-    }
     
     // Notificar a todos los jugadores
     io.to(roomId).emit('gameWon', {
@@ -412,11 +329,10 @@ async function checkVictoryCondition(roomId) {
 function nextTurn(roomId) {
   if (!gameRooms[roomId]) return;
   
-  gameRooms[roomId].currentTurn++;
+  gameRooms[roomId].currentTurn = (gameRooms[roomId].currentTurn + 1) % gameRooms[roomId].players.length;
   
   // Si hemos completado una ronda
-  if (gameRooms[roomId].currentTurn >= gameRooms[roomId].players.length) {
-    gameRooms[roomId].currentTurn = 0;
+  if (gameRooms[roomId].currentTurn === 0) {
     gameRooms[roomId].round++;
   }
   
