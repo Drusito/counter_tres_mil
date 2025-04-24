@@ -1,5 +1,5 @@
 {
-  "name": "casino-3k-online",
+  "name": "tresmil",
   "version": "1.0.0",
   "description": "El 3000",
   "main": "server.js",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
+    "firebase-admin": "^11.10.1",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
