@@ -27,6 +27,9 @@
           <button onclick="showScreen('offline-mode')" class="btn btn-secondary btn-large">
             <i class="fas fa-users"></i> Modo Offline
           </button>
+          <button onclick="showScreen('stats')" class="btn btn-info btn-large">
+            <i class="fas fa-chart-bar"></i> Estadísticas
+          </button>
         </div>
       </div>
     </div>
@@ -79,6 +82,45 @@
         </button>
         <button onclick="showScreen('main-menu')" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Volver
+        </button>
+      </div>
+    </div>
+
+    <!-- Pantalla de estadísticas -->
+    <div id="stats-screen" class="screen hidden">
+      <h2>Estadísticas</h2>
+      <div class="stats-container">
+        <div class="stats-nav">
+          <button id="history-tab-btn" class="stats-tab-button active" onclick="showStatsTab('history')">
+            <i class="fas fa-history"></i> Historial
+          </button>
+          <button id="players-tab-btn" class="stats-tab-button" onclick="showStatsTab('players')">
+            <i class="fas fa-trophy"></i> Jugadores
+          </button>
+        </div>
+        
+        <div id="history-tab" class="stats-tab">
+          <h3>Historial de partidas</h3>
+          <div class="stats-loading" id="history-loading">
+            <i class="fas fa-spinner fa-spin"></i> Cargando...
+          </div>
+          <div class="game-history-container" id="game-history-list">
+            <!-- El historial de juegos se cargará aquí dinámicamente -->
+          </div>
+        </div>
+        
+        <div id="players-tab" class="stats-tab hidden">
+          <h3>Mejores jugadores</h3>
+          <div class="stats-loading" id="players-loading">
+            <i class="fas fa-spinner fa-spin"></i> Cargando...
+          </div>
+          <div class="players-stats-container" id="players-stats-list">
+            <!-- Las estadísticas de jugadores se cargarán aquí dinámicamente -->
+          </div>
+        </div>
+        
+        <button onclick="showScreen('main-menu')" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Volver al menú
         </button>
       </div>
     </div>
