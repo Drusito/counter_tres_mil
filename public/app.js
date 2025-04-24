@@ -14,6 +14,10 @@ let gameState = {
   roomCreator: null
 };
 
+// Variables para controlar si ya se cargaron los datos
+let historyDataLoaded = false;
+let playersDataLoaded = false;
+
 // Función para cambiar entre pantallas
 function showScreen(screenId) {
   console.log('Cambiando a pantalla:', screenId);
@@ -27,6 +31,15 @@ function showScreen(screenId) {
   const screenToShow = document.getElementById(screenId + '-screen');
   if (screenToShow) {
     screenToShow.classList.remove('hidden');
+  }
+  
+  // Si estamos mostrando la pantalla de estadísticas, cargar datos automáticamente
+  if (screenId === 'stats') {
+    console.log('Cargando estadísticas automáticamente...');
+    // Mostrar pestaña de historial por defecto y cargar datos
+    setTimeout(() => {
+      showStatsTab('history');
+    }, 100);
   }
 }
 
@@ -166,28 +179,41 @@ function updateOfflinePlayerCounters() {
   document.getElementById('current-player-name').textContent = offlinePlayers[offlineCurrentTurn].name;
 }
 
+// Función para avanzar turno en modo offline
+function nextOfflineTurn() {
+  offlineCurrentTurn++;
+  
+  // Si hemos completado una ronda
+  if (offlineCurrentTurn >= offlinePlayers.length) {
+    offlineCurrentTurn = 0;
+    offlineRound++;
+  }
+  
+  updateOfflinePlayerCounters();
+}
+
 // Función para comprobar la victoria al final de la ronda en modo offline
 function checkVictoryCondition() {
-    // Buscar jugadores con más de 3000 puntos
-    const winners = offlinePlayers.filter(player => player.totalScore >= 3000);
+  // Buscar jugadores con más de 3000 puntos
+  const winners = offlinePlayers.filter(player => player.totalScore >= 3000);
+  
+  // Si hay ganadores, determinar el ganador final (mayor puntuación)
+  if (winners.length > 0) {
+    // Si hay varios con más de 3000, el ganador es el que tenga mayor puntuación
+    const winner = winners.reduce((highest, player) => 
+      player.totalScore > highest.totalScore ? player : highest, winners[0]);
     
-    // Si hay ganadores, determinar el ganador final (mayor puntuación)
-    if (winners.length > 0) {
-      // Si hay varios con más de 3000, el ganador es el que tenga mayor puntuación
-      const winner = winners.reduce((highest, player) => 
-        player.totalScore > highest.totalScore ? player : highest, winners[0]);
-      
-      // Mostrar modal de victoria
-      document.getElementById('winner-name').textContent = winner.name;
-      document.getElementById('winner-score').textContent = winner.totalScore;
-      document.getElementById('victory-modal').style.display = 'flex';
-      document.getElementById('game-controls').classList.add('hidden');
-      
-      return true; // Indicar que hay un ganador
-    }
+    // Mostrar modal de victoria
+    document.getElementById('winner-name').textContent = winner.name;
+    document.getElementById('winner-score').textContent = winner.totalScore;
+    document.getElementById('victory-modal').style.display = 'flex';
+    document.getElementById('game-controls').classList.add('hidden');
     
-    return false; // Indicar que no hay ganador
+    return true; // Indicar que hay un ganador
   }
+  
+  return false; // Indicar que no hay ganador
+}
 
 // Función para sincronizar el estado del juego con los datos recibidos del servidor
 function syncGameState(data) {
@@ -261,37 +287,37 @@ function declareBankruptcy() {
 }
 
 function finishTurn() {
-    if (offlineMode) {
-      const currentPlayer = offlinePlayers[offlineCurrentTurn];
+  if (offlineMode) {
+    const currentPlayer = offlinePlayers[offlineCurrentTurn];
+    
+    // Guardar puntuación
+    currentPlayer.scores.push(currentPlayer.currentRoundScore);
+    currentPlayer.totalScore = currentPlayer.scores.reduce((a, b) => a + b, 0);
+    currentPlayer.currentRoundScore = 0;
+    
+    // Incrementamos el turno
+    offlineCurrentTurn++;
+    
+    // Si hemos completado una ronda
+    if (offlineCurrentTurn >= offlinePlayers.length) {
+      // Comprobar victoria al final de la ronda
+      const hasWinner = checkVictoryCondition();
       
-      // Guardar puntuación
-      currentPlayer.scores.push(currentPlayer.currentRoundScore);
-      currentPlayer.totalScore = currentPlayer.scores.reduce((a, b) => a + b, 0);
-      currentPlayer.currentRoundScore = 0;
-      
-      // Incrementamos el turno
-      offlineCurrentTurn++;
-      
-      // Si hemos completado una ronda
-      if (offlineCurrentTurn >= offlinePlayers.length) {
-        // Comprobar victoria al final de la ronda
-        const hasWinner = checkVictoryCondition();
-        
-        // Reiniciar turno y aumentar ronda solo si no hay ganador
-        if (!hasWinner) {
-          offlineCurrentTurn = 0;
-          offlineRound++;
-          // Actualizar contadores
-          updateOfflinePlayerCounters();
-        }
-      } else {
-        // Si no hemos completado la ronda, actualizar contadores
+      // Reiniciar turno y aumentar ronda solo si no hay ganador
+      if (!hasWinner) {
+        offlineCurrentTurn = 0;
+        offlineRound++;
+        // Actualizar contadores
         updateOfflinePlayerCounters();
       }
     } else {
-      socket.emit('finishTurn');
+      // Si no hemos completado la ronda, actualizar contadores
+      updateOfflinePlayerCounters();
     }
+  } else {
+    socket.emit('finishTurn');
   }
+}
 
 function exitGame() {
   if (offlineMode) {
@@ -561,25 +587,38 @@ socket.on('error', function(data) {
   showNotification(data.message, 'error');
 });
 
-// Variables para controlar si ya se cargaron los datos
-let historyDataLoaded = false;
-let playersDataLoaded = false;
+// Mantenemos estos eventos de Socket para compatibilidad
+socket.on('gameHistoryData', function(data) {
+  console.log('Recibidos datos de historial vía Socket.io (método obsoleto)');
+});
+
+socket.on('playerStatsData', function(data) {
+  console.log('Recibidos datos de estadísticas vía Socket.io (método obsoleto)');
+});
 
 // Función para cargar el historial de partidas desde el servidor
 function loadGameHistory() {
+  console.log('Iniciando carga de historial de juegos...');
+  
   // Mostrar indicador de carga
   document.getElementById('history-loading').style.display = 'flex';
   document.getElementById('game-history-list').innerHTML = '';
   
-  // Solicitar datos al servidor usando fetch en lugar de socket
-  fetch('/api/games/history')
+  // URL del endpoint
+  const url = '/api/games/history';
+  console.log('Solicitando datos a:', url);
+  
+  // Solicitar datos al servidor usando fetch
+  fetch(url)
     .then(response => {
+      console.log('Respuesta recibida:', response.status);
       if (!response.ok) {
-        throw new Error('Error en la respuesta del servidor');
+        throw new Error('Error en la respuesta del servidor: ' + response.status);
       }
       return response.json();
     })
     .then(data => {
+      console.log('Datos de historial recibidos:', data ? data.length : 0, 'partidas');
       historyDataLoaded = true;
       document.getElementById('history-loading').style.display = 'none';
       
@@ -630,6 +669,7 @@ function loadGameHistory() {
       });
       
       historyContainer.innerHTML = historyHTML;
+      console.log('Historial de juegos cargado correctamente');
     })
     .catch(error => {
       console.error('Error al cargar historial:', error);
@@ -637,7 +677,7 @@ function loadGameHistory() {
       document.getElementById('game-history-list').innerHTML = `
         <div class="no-data-message">
           <i class="fas fa-exclamation-circle"></i>
-          Error al cargar datos. Por favor, inténtalo de nuevo.
+          Error al cargar datos: ${error.message}
         </div>
       `;
     });
@@ -645,6 +685,7 @@ function loadGameHistory() {
   // Timeout de seguridad
   setTimeout(() => {
     if (document.getElementById('history-loading').style.display === 'flex') {
+      console.warn('Timeout de carga de historial alcanzado');
       document.getElementById('history-loading').style.display = 'none';
       document.getElementById('game-history-list').innerHTML = `
         <div class="no-data-message">
@@ -655,3 +696,170 @@ function loadGameHistory() {
     }
   }, 10000);
 }
+
+// Función para cargar estadísticas de jugadores desde el servidor
+function loadPlayerStats() {
+  console.log('Iniciando carga de estadísticas de jugadores...');
+  
+  // Mostrar indicador de carga
+  document.getElementById('players-loading').style.display = 'flex';
+  document.getElementById('players-stats-list').innerHTML = '';
+  
+  // URL del endpoint
+  const url = '/api/players/stats';
+  console.log('Solicitando datos a:', url);
+  
+  // Solicitar datos al servidor usando fetch
+  fetch(url)
+    .then(response => {
+      console.log('Respuesta recibida:', response.status);
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Datos de jugadores recibidos:', data ? data.length : 0, 'jugadores');
+      playersDataLoaded = true;
+      document.getElementById('players-loading').style.display = 'none';
+      
+      const playersContainer = document.getElementById('players-stats-list');
+      
+      if (!data || data.length === 0) {
+        playersContainer.innerHTML = `
+          <div class="no-data-message">
+            No hay estadísticas de jugadores aún. ¡Juega algunas partidas online!
+          </div>
+        `;
+        return;
+      }
+      
+      let playersHTML = '';
+      
+      data.forEach((player, index) => {
+        // Calcular porcentaje de victorias
+        const winRate = player.totalGames > 0 ? Math.round((player.wins / player.totalGames) * 100) : 0;
+        
+        // Calcular promedio de puntos
+        const avgScore = player.totalGames > 0 ? Math.round(player.totalScore / player.totalGames) : 0;
+        
+        playersHTML += `
+          <div class="player-stats-item">
+            <div class="player-stats-header">
+              <div class="player-stats-name">
+                <span class="rank-number">${index + 1}</span>
+                ${player.name}
+              </div>
+            </div>
+            <div class="player-stats-details">
+              <div class="player-stat">
+                <div class="player-stat-value">${player.wins}</div>
+                <div class="player-stat-label">Victorias</div>
+              </div>
+              <div class="player-stat">
+                <div class="player-stat-value">${player.totalGames}</div>
+                <div class="player-stat-label">Partidas</div>
+              </div>
+              <div class="player-stat">
+                <div class="player-stat-value">${winRate}%</div>
+                <div class="player-stat-label">% Victoria</div>
+              </div>
+              <div class="player-stat">
+                <div class="player-stat-value">${avgScore}</div>
+                <div class="player-stat-label">Media Pts</div>
+              </div>
+              <div class="player-stat">
+                <div class="player-stat-value">${player.highestScore}</div>
+                <div class="player-stat-label">Mayor Punt.</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      playersContainer.innerHTML = playersHTML;
+      console.log('Estadísticas de jugadores cargadas correctamente');
+    })
+    .catch(error => {
+      console.error('Error al cargar estadísticas:', error);
+      document.getElementById('players-loading').style.display = 'none';
+      document.getElementById('players-stats-list').innerHTML = `
+        <div class="no-data-message">
+          <i class="fas fa-exclamation-circle"></i>
+          Error al cargar datos: ${error.message}
+        </div>
+      `;
+    });
+  
+  // Timeout de seguridad
+  setTimeout(() => {
+    if (document.getElementById('players-loading').style.display === 'flex') {
+      console.warn('Timeout de carga de estadísticas alcanzado');
+      document.getElementById('players-loading').style.display = 'none';
+      document.getElementById('players-stats-list').innerHTML = `
+        <div class="no-data-message">
+          <i class="fas fa-exclamation-circle"></i>
+          Tiempo de espera agotado. Por favor, inténtalo de nuevo.
+        </div>
+      `;
+    }
+  }, 10000);
+}
+
+// Función para formatear fecha
+function formatDate(timestamp) {
+  if (!timestamp) return 'Fecha desconocida';
+  
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('es-ES', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+// Función para mostrar pestañas en la sección de estadísticas
+function showStatsTab(tabName) {
+  console.log('Mostrando pestaña de estadísticas:', tabName);
+  
+  // Ocultar todas las pestañas
+  document.querySelectorAll('.stats-tab').forEach(tab => {
+    tab.classList.add('hidden');
+  });
+  
+  // Desactivar todos los botones de pestañas
+  document.querySelectorAll('.stats-tab-button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Mostrar la pestaña solicitada
+  const tabToShow = document.getElementById(tabName + '-tab');
+  if (tabToShow) {
+    tabToShow.classList.remove('hidden');
+  } else {
+    console.error('No se encontró la pestaña:', tabName + '-tab');
+  }
+  
+  // Activar el botón correspondiente
+  const buttonToActivate = document.getElementById(tabName + '-tab-btn');
+  if (buttonToActivate) {
+    buttonToActivate.classList.add('active');
+  } else {
+    console.error('No se encontró el botón de pestaña:', tabName + '-tab-btn');
+  }
+  
+  // Cargar datos específicos de la pestaña
+  if (tabName === 'history') {
+    loadGameHistory();
+  } else if (tabName === 'players') {
+    loadPlayerStats();
+  }
+}
+
+// Inicializar mostrando la pantalla principal al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM cargado, iniciando aplicación...');
+  showScreen('main-menu');
+});

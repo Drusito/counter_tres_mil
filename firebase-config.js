@@ -2,7 +2,7 @@
 const admin = require('firebase-admin');
 
 // Credenciales de Firebase
-const serviceAccount = require('./firebase-credentials.json');
+const serviceAccount = require('./tresmill-firebase-adminsdk-fbsvc-8f87b43fb8.json');
 
 let db;
 
