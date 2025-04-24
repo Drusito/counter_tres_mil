@@ -10,12 +10,92 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+// Función para verificar el estado de Firebase y registrar detalles
+async function checkFirebaseConnection() {
+  console.log('=====================================');
+  console.log('VERIFICANDO CONEXIÓN A FIREBASE');
+  console.log('=====================================');
+  
+  try {
+    if (!db) {
+      console.error('❌ ERROR: Instancia de base de datos no inicializada');
+      return false;
+    }
+    
+    // Intentar una operación simple de lectura para verificar conectividad
+    console.log('Probando conexión a Firebase...');
+    const ref = db.ref('.info/connected');
+    const snapshot = await ref.once('value');
+    const connected = snapshot.val() === true;
+    
+    if (connected) {
+      console.log('✅ Conexión a Firebase ACTIVA');
+      
+      // Probar obtener datos de prueba
+      console.log('Intentando leer datos de prueba...');
+      
+      // Intentar leer historial de partidas
+      const games = await getGameHistory(1);
+      console.log(`- Recuperación de historial: ${games.length > 0 ? '✅ OK' : '❓ Sin datos'}`);
+      
+      // Intentar leer estadísticas de jugadores
+      const players = await getPlayerStats();
+      console.log(`- Recuperación de estadísticas: ${players.length > 0 ? '✅ OK' : '❓ Sin datos'}`);
+      
+      console.log('Pruebas de lectura completadas');
+      return true;
+    } else {
+      console.error('❌ ERROR: No se pudo conectar a Firebase');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ ERROR al verificar conexión a Firebase:', error);
+    return false;
+  } finally {
+    console.log('=====================================');
+  }
+}
+
+// Agregar esta función para mostrar detalles de la solicitud
+function logRequestDetails(req, res, next) {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+}
+
+// Añadir middleware para logging de peticiones
+app.use(logRequestDetails);
+
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Rutas
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Ruta para obtener historial de partidas
+app.get('/api/games/history', async (req, res) => {
+  try {
+    console.log('Solicitando historial de partidas vía HTTP');
+    const limit = req.query.limit || 20;
+    const gameHistory = await getGameHistory(parseInt(limit));
+    res.json(gameHistory);
+  } catch (error) {
+    console.error('Error al obtener historial de partidas:', error);
+    res.status(500).json({ error: 'Error al obtener historial de partidas' });
+  }
+});
+
+// Ruta para obtener estadísticas de jugadores
+app.get('/api/players/stats', async (req, res) => {
+  try {
+    console.log('Solicitando estadísticas de jugadores vía HTTP');
+    const playerStats = await getPlayerStats();
+    res.json(playerStats);
+  } catch (error) {
+    console.error('Error al obtener estadísticas de jugadores:', error);
+    res.status(500).json({ error: 'Error al obtener estadísticas de jugadores' });
+  }
 });
 
 app.get('/api/check-database', async (req, res) => {
@@ -519,4 +599,10 @@ function generateRoomId() {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor del juego de casino corriendo en puerto ${PORT}`);
+  
+  // Verificar conexión a Firebase al iniciar
+  checkFirebaseConnection()
+    .then(connected => {
+      console.log(`Estado de Firebase al iniciar servidor: ${connected ? 'Conectado ✅' : 'Desconectado ❌'}`);
+    });
 });
