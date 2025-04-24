@@ -14,42 +14,25 @@
 <body>
   <div id="app">
     <!-- Pantalla de inicio principal -->
-<!-- Añade este botón al main-menu-screen en el index.html -->
-<!-- Colócalo justo después del cierre del div "button-group" -->
-
-<div id="main-menu-screen" class="screen">
-  <div class="logo-container animate__animated animate__bounceIn">
-    <h1>🎰 3000 🎲</h1>
-    <div class="tagline"></div>
-  </div>
-  <div class="form-container animate__animated animate__fadeInUp">
-    <div class="button-group">
-      <button onclick="showScreen('online-menu')" class="btn btn-primary btn-large">
-        <i class="fas fa-globe"></i> Modo Online
-      </button>
-      <button onclick="showScreen('offline-mode')" class="btn btn-secondary btn-large">
-        <i class="fas fa-users"></i> Modo Offline
-      </button>
+    <div id="main-menu-screen" class="screen">
+      <div class="logo-container animate__animated animate__bounceIn">
+        <h1>🎰 3000 🎲</h1>
+        <div class="tagline"></div>
+      </div>
+      <div class="form-container animate__animated animate__fadeInUp">
+        <div class="button-group">
+          <button onclick="showScreen('online-menu')" class="btn btn-primary btn-large">
+            <i class="fas fa-globe"></i> Modo Online
+          </button>
+          <button onclick="showScreen('offline-mode')" class="btn btn-secondary btn-large">
+            <i class="fas fa-users"></i> Modo Offline
+          </button>
+          <button onclick="showScreen('stats')" class="btn btn-info btn-large">
+            <i class="fas fa-chart-bar"></i> Estadísticas
+          </button>
+        </div>
+      </div>
     </div>
-    <!-- Botón de historial aquí -->
-    <button id="history-button" class="btn btn-info btn-large">
-      <i class="fas fa-history"></i> Historial de Partidas
-    </button>
-  </div>
-</div>
-
-<!-- Añade esta nueva pantalla antes del cierre del div "app" -->
-
-<!-- Pantalla de historial -->
-<div id="history-screen" class="screen hidden">
-  <h2>Historial de Partidas</h2>
-  <div id="history-container" class="history-container">
-    <p class="loading">Cargando historial...</p>
-  </div>
-  <button onclick="showScreen('main-menu')" class="btn btn-secondary">
-    <i class="fas fa-arrow-left"></i> Volver
-  </button>
-</div>
 
     <!-- Pantalla de modo online (menú) -->
     <div id="online-menu-screen" class="screen hidden">
