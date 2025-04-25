@@ -1,22 +1,22 @@
 /* Script para el juego Tresmil con 4 Dados */
 
 // Variables del juego
-let total = 0;
-let dadosBloqueados = [false, false, false, false];
-let valoresDados = ['', '', '', ''];
-let tiradaEnProceso = false;
+let totalPuntosDados = 0;
+let dadosBlocked = [false, false, false, false];
+let valoresDadosv = ['', '', '', ''];
+let tiradaEnProcesov = false;
 
 // Valores posibles de los dados
-const valores = ['A', 'K', 'Q', 'J', 'R', 'N'];
+const valoresPosibles = ['A', 'K', 'Q', 'J', 'R', 'N'];
 
 // Imágenes para los dados
-const imagenes = {
-  'A': 'dados/A.png',
-  'K': 'dados/K.png',
-  'Q': 'dados/Q.png',
-  'J': 'dados/J.png',
-  'R': 'dados/R.png',
-  'N': 'dados/N.png'
+const imagenesDados = {
+  'A': 'images/dados/A.png',
+  'K': 'images/dados/K.png',
+  'Q': 'images/dados/Q.png',
+  'J': 'images/dados/J.png',
+  'R': 'images/dados/R.png',
+  'N': 'images/dados/N.png'
 };
 
 // Función para añadir mensajes al log
@@ -45,7 +45,7 @@ function tirarDadoAnimado(id, callback) {
   const interval = setInterval(() => {
     const randomIndex = Math.floor(Math.random() * valores.length);
     const valorTemp = valores[randomIndex];
-    dado.style.backgroundImage = `url(${imagenes[valorTemp]})`;
+    dado.style.backgroundImage = `url(${imagenesDados[valorTemp]})`;
     contador++;
     if (contador > 10) {
       clearInterval(interval);
@@ -101,7 +101,7 @@ function lanzarDados() {
           
           // Actualizar el valor y la visualización del dado
           valoresDados[index] = valor;
-          document.getElementById(`dado${index + 1}`).style.backgroundImage = `url(${imagenes[valor]})`;
+          document.getElementById(`dado${index + 1}`).style.backgroundImage = `url(${imagenesDados[valor]})`;
           
           // Registrar el dado tirado
           dadosTirados.push({ index, valor });
@@ -124,7 +124,7 @@ function lanzarDados() {
     if (negras === 3) {
       total = 0;
       actualizarPuntos();
-      addLog('¡BANCARROTA! 3 Negras - Pierdes todos los puntos', 'mensaje-error');
+      addLog('¡BANKARROTA! Que pringao!!', 'mensaje-error');
       
       // Efecto visual
       dadosTirados.forEach(d => {
@@ -142,6 +142,7 @@ function lanzarDados() {
       
       setTimeout(() => {
         document.getElementById('bankrupt-modal').style.display = 'flex';
+        reiniciarPuntuacion();
         reiniciarDados();
         // Informar al servidor de la bancarrota
         socket.emit('dadosBankrupt');
@@ -242,9 +243,9 @@ function lanzarDados() {
       
       setTimeout(() => {
         reiniciarDados();
-        document.getElementById('bankrupt-modal').style.display = 'flex';
-        // Avanzar turno
-        socket.emit('dadosBankrupt');
+        // document.getElementById('bankrupt-modal').style.display = 'flex';
+        // Avanzar turnox
+        socket.emit('dadosFinishTurn');
       }, 1000);
       
     } else {
@@ -275,6 +276,7 @@ function lanzarDados() {
   });
 }
 
+
 // Función para plantarse y guardar los puntos
 function plantarseDados() {
   if (tiradaEnProceso) return;
@@ -299,7 +301,7 @@ function plantarseDados() {
 
 // Función para actualizar los marcadores de puntos
 function actualizarPuntos() {
-  document.getElementById('dados-puntos').textContent = `Puntos: ${total}`;
+  document.getElementById('dados-puntos').textContent = `+ ${total} pts`;
   
   // Buscar mi índice de jugador
   const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);

@@ -1121,6 +1121,7 @@ label {
 }
 
 #dados-puntos, #dados-puntos-guardados {
+  color: var(--primary-color);
   font-size: 24px;
   margin: 0;
   padding: 10px 20px;
@@ -1391,4 +1392,7 @@ label {
     width: 100%;
     max-width: 250px;
   }
+}
+.hidden {
+  display: none;
 }

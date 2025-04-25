@@ -480,7 +480,6 @@ socket.on('finishDadosGame', async (data) => {
 });
 
 socket.on('createDadosRoom', (data) => {
-  console.log('Petición de crear sala de dados recibida:', data);
   const roomId = generateRoomId();
   const playerName = data.playerName || `Jugador ${socket.id.substr(0, 4)}`;
   
@@ -572,34 +571,6 @@ socket.on('joinDadosRoom', (data) => {
   console.log(`Jugador ${playerName} se unió a la sala de dados ${roomId}`);
 });
 
-socket.on('startDadosGame', () => {
-  const roomId = socket.dadosRoomId;
-  
-  if (!roomId || !dadosGameRooms[roomId]) {
-    socket.emit('error', { message: 'No estás en una sala de dados válida' });
-    return;
-  }
-
-  // Verificar si el jugador es el creador
-  if (socket.id !== dadosGameRooms[roomId].creator) {
-    socket.emit('error', { message: 'Solo el creador puede iniciar el juego de dados' });
-    return;
-  }
-
-  // Iniciar juego
-  dadosGameRooms[roomId].gameStarted = true;
-  dadosGameRooms[roomId].currentTurn = 0; // El primer jugador comienza
-  
-  // Notificar a todos los jugadores que el juego ha comenzado
-  io.to(roomId).emit('dadosGameStarted', {
-    currentPlayer: dadosGameRooms[roomId].players[0],
-    currentPlayerIndex: 0,
-    players: dadosGameRooms[roomId].players,
-    round: dadosGameRooms[roomId].round
-  });
-
-  console.log(`Juego de dados iniciado en sala ${roomId}`);
-});
 
 socket.on('dadosFinishTurn', () => {
   const roomId = socket.dadosRoomId;
@@ -629,7 +600,7 @@ socket.on('dadosFinishTurn', () => {
   // Si hemos completado una ronda (el turno vuelve al primer jugador)
   if (dadosGameRooms[roomId].currentTurn === 0) {
     // Comprobar victoria al final de la ronda
-    const winnerResult = checkDadosVictoryCondition(roomId);
+    const winnerResult = checkVictoryCondition(roomId);
     
     // Solo avanzar a la siguiente ronda si no hubo ganador
     if (!winnerResult) {
@@ -679,7 +650,7 @@ socket.on('dadosBankrupt', () => {
   });
 
   // Avanzar turno
-  nextDadosTurn(roomId);
+  nextTurn(roomId);
 });
 
 // Evento para actualizar puntuación en juego de dados
@@ -719,6 +690,35 @@ socket.on('disconnect', () => {
   handleDadosPlayerDisconnect(socket);
 });
 
+socket.on('startDadosGame', () => {
+  const roomId = socket.dadosRoomId;
+  
+  if (!roomId || !dadosGameRooms[roomId]) {
+    socket.emit('error', { message: 'No estás en una sala de dados válida' });
+    return;
+  }
+
+  // Verificar si el jugador es el creador
+  if (socket.id !== dadosGameRooms[roomId].creator) {
+    socket.emit('error', { message: 'Solo el creador puede iniciar el juego de dados' });
+    return;
+  }
+
+  // Iniciar juego
+  dadosGameRooms[roomId].gameStarted = true;
+  dadosGameRooms[roomId].currentTurn = 0; // El primer jugador comienza
+  
+  // Notificar a todos los jugadores que el juego ha comenzado
+  io.to(roomId).emit('dadosGameStarted', {
+    currentPlayer: dadosGameRooms[roomId].players[0],
+    currentPlayerIndex: 0,
+    players: dadosGameRooms[roomId].players,
+    round: dadosGameRooms[roomId].round,
+    gameType: 'dados'
+  });
+
+  console.log(`Juego de dados iniciado en sala ${roomId}`);
+});
 });
 
 function handleDadosPlayerDisconnect(socket) {
@@ -774,70 +774,7 @@ function handleDadosPlayerDisconnect(socket) {
     });
   }
 }
-// Función para avanzar al siguiente turno en juego de dados
-function nextDadosTurn(roomId) {
-  if (!dadosGameRooms[roomId]) return;
-  
-  dadosGameRooms[roomId].currentTurn = (dadosGameRooms[roomId].currentTurn + 1) % dadosGameRooms[roomId].players.length;
-  
-  // Si hemos completado una ronda
-  if (dadosGameRooms[roomId].currentTurn === 0) {
-    dadosGameRooms[roomId].round++;
-  }
-  
-  // Notificar a todos los jugadores
-  io.to(roomId).emit('dadosTurnChanged', {
-    currentPlayerIndex: dadosGameRooms[roomId].currentTurn,
-    currentPlayer: dadosGameRooms[roomId].players[dadosGameRooms[roomId].currentTurn],
-    round: dadosGameRooms[roomId].round,
-    players: dadosGameRooms[roomId].players
-  });
-}
 
-// Función para comprobar victoria en juego de dados
-function checkDadosVictoryCondition(roomId) {
-  if (!dadosGameRooms[roomId]) return false;
-  
-  // Buscar jugadores con más de 3000 puntos
-  const winners = dadosGameRooms[roomId].players.filter(player => player.totalScore >= 3000);
-  
-  // Si hay ganadores, determinar el ganador final (mayor puntuación)
-  if (winners.length > 0) {
-    // Si hay varios con más de 3000, el ganador es el que tenga mayor puntuación
-    const winner = winners.reduce((highest, player) => 
-      player.totalScore > highest.totalScore ? player : highest, winners[0]);
-    
-    // Guardar la partida en Firebase
-    const gameData = {
-      id: roomId,
-      players: dadosGameRooms[roomId].players,
-      winner: winner,
-      rounds: dadosGameRooms[roomId].round,
-      timestamp: Date.now(),
-      gameMode: 'dados'
-    };
-    
-    // Registrar la partida usando la función específica para dados
-    registerDadosGame(gameData)
-      .then(id => console.log(`Partida de dados guardada con ID: ${id}`))
-      .catch(error => console.error('Error al guardar partida de dados:', error));
-    
-    // Notificar a todos los jugadores
-    io.to(roomId).emit('dadosGameWon', {
-      winner: winner,
-      players: dadosGameRooms[roomId].players
-    });
-    
-    // Reiniciar sala para nueva partida después de 10 segundos
-    setTimeout(() => {
-      delete dadosGameRooms[roomId];
-    }, 10000);
-    
-    return true; // Indicar que hay un ganador
-  }
-  
-  return false; // Indicar que no hay ganador
-}
 
 function checkVictoryCondition(roomId) {
   if (!gameRooms[roomId]) return false;
@@ -964,7 +901,6 @@ function generateRoomId() {
 
 // Iniciar servidor
 const PORT = process.env.PORT;
-console.log(process.env.FIREBASE_CONFIG);
 server.listen(PORT, () => {
   console.log(`Servidor del juego de casino corriendo en puerto ${PORT}`);
 });

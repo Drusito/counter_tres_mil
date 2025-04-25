@@ -70,7 +70,60 @@
       </div>
     </div>
 
-    <!-- Pantalla Modo Dados -->
+    <!-- Pantalla Modo Dados (menú) -->
+    <div id="dados-menu-screen" class="screen hidden">
+      <h2>Modo Dados</h2>
+      <div class="form-container">
+        <input type="text" id="dados-player-name" placeholder="Tu nombre" maxlength="15">
+        <div class="button-group">
+          <button onclick="createDadosRoom()" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Crear sala
+          </button>
+          <button onclick="showScreen('join-dados-room')" class="btn btn-secondary">
+            <i class="fas fa-sign-in-alt"></i> Unirse a sala
+          </button>
+          <button onclick="showScreen('main-menu')" class="btn btn-info">
+            <i class="fas fa-arrow-left"></i> Volver
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pantalla para unirse a sala de dados -->
+    <div id="join-dados-room-screen" class="screen hidden">
+      <h2>Unirse a sala de dados</h2>
+      <div class="form-container">
+        <input type="text" id="dados-room-code" placeholder="Código de sala" maxlength="6">
+        <button onclick="joinDadosRoom()" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt"></i> Unirse
+        </button>
+        <button onclick="showScreen('dados-menu')" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Volver
+        </button>
+      </div>
+    </div>
+
+    <!-- Pantalla de sala de espera de dados - Corregida con ID correcto -->
+    <div id="dados-waiting-room-screen" class="screen hidden">
+      <h2>Sala de espera de dados</h2>
+      <div class="room-info">
+        <div class="room-code">Código de sala: <span id="dados-room-code-display"></span></div>
+        <div class="player-list-container">
+          <h3>Jugadores</h3>
+          <ul id="dados-player-list"></ul>
+        </div>
+        <div id="dados-creator-controls" class="hidden">
+          <button onclick="startDadosGame()" class="btn btn-primary">
+            <i class="fas fa-play"></i> Iniciar juego
+          </button>
+        </div>
+        <button onclick="leaveDadosRoom()" class="btn btn-danger">
+          <i class="fas fa-door-open"></i> Salir de la sala
+        </button>
+      </div>
+    </div>
+
+    <!-- Pantalla Modo Dados descripcción -->
     <div id="modo-dados-screen" class="screen hidden">
       <h2>Tresmil con 4 Dados</h2>
       <div class="form-container">
@@ -121,14 +174,16 @@
     </div>
 
     <!-- Pantalla de juego de dados -->
-    <div id="game-dados-screen" class="screen hidden">
+    <div id="dados-game-screen" class="screen hidden">
       <div class="game-header">
         <h1>Tresmil con 4 Dados</h1>
         <div class="game-info">
           <p id="dados-round-counter">Ronda: 1</p>
-          <p id="dados-turn-indicator">Turno de: <span id="dados-player-name"></span></p>
+          <p id="dados-turn-indicator">Turno de: <span id="dados-current-player-name"></span></p>
         </div>
       </div>
+      
+      <div id="dados-counters-container"></div>
       
       <div id="dados-container">
         <div class="dado" id="dado1"></div>
@@ -138,13 +193,11 @@
       </div>
       
       <div class="puntos-info">
-        <p id="dados-puntos">Puntos: 0</p>
-        <p id="dados-puntos-guardados">Total: 0</p>
+        <p id="dados-puntos">+ 0 pts</p>
+        <p class="hidden" id="dados-puntos-guardados">Total: 0</p>
       </div>
       
-      <div id="dados-players-container"></div>
-      
-      <div id="dados-controls">
+      <div id="dados-game-controls" class="hidden">
         <button id="lanzar-dados" class="btn btn-primary">
           <i class="fas fa-dice"></i> Lanzar Dados
         </button>
@@ -294,99 +347,6 @@
           <i class="fas fa-redo"></i> Nueva partida
         </button>
       </div>
-    </div>
-    <div id="dados-menu-screen" class="screen hidden">
-      <h2>Modo Dados</h2>
-      <div class="form-container">
-        <input type="text" id="dados-player-name" placeholder="Tu nombre" maxlength="15">
-        <div class="button-group">
-          <button onclick="createDadosRoom()" class="btn btn-primary">
-            <i class="fas fa-plus-circle"></i> Crear sala
-          </button>
-          <button onclick="showScreen('join-dados-room')" class="btn btn-secondary">
-            <i class="fas fa-sign-in-alt"></i> Unirse a sala
-          </button>
-          <button onclick="showScreen('main-menu')" class="btn btn-info">
-            <i class="fas fa-arrow-left"></i> Volver
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Pantalla para unirse a sala de dados -->
-    <div id="join-dados-room-screen" class="screen hidden">
-      <h2>Unirse a sala de dados</h2>
-      <div class="form-container">
-        <input type="text" id="dados-room-code" placeholder="Código de sala" maxlength="6">
-        <button onclick="joinDadosRoom()" class="btn btn-primary">
-          <i class="fas fa-sign-in-alt"></i> Unirse
-        </button>
-        <button onclick="showScreen('dados-menu')" class="btn btn-secondary">
-          <i class="fas fa-arrow-left"></i> Volver
-        </button>
-      </div>
-    </div>
-    
-    <!-- Pantalla de sala de espera de dados -->
-    <div id="waiting-dados-room-screen" class="screen hidden">
-      <h2>Sala de espera de dados</h2>
-      <div class="room-info">
-        <div class="room-code">Código de sala: <span id="dados-room-code-display"></span></div>
-        <div class="player-list-container">
-          <h3>Jugadores</h3>
-          <ul id="dados-player-list"></ul>
-        </div>
-        <div id="dados-creator-controls" class="hidden">
-          <button onclick="startDadosGame()" class="btn btn-primary">
-            <i class="fas fa-play"></i> Iniciar juego
-          </button>
-        </div>
-        <button onclick="leaveDadosRoom()" class="btn btn-danger">
-          <i class="fas fa-door-open"></i> Salir de la sala
-        </button>
-      </div>
-    </div>
-    
-    <!-- Pantalla de juego de dados -->
-    <div id="game-dados-screen" class="screen hidden">
-      <div class="game-header">
-        <h1>Tresmil con 4 Dados</h1>
-        <div class="game-info">
-          <p id="dados-round-counter">Ronda: 1</p>
-          <p id="dados-turn-indicator">Turno de: <span id="dados-player-name-turn"></span></p>
-        </div>
-      </div>
-      
-      <div id="dados-players-container"></div>
-      
-      <div id="dados-container">
-        <div class="dado" id="dado1"></div>
-        <div class="dado" id="dado2"></div>
-        <div class="dado" id="dado3"></div>
-        <div class="dado" id="dado4"></div>
-      </div>
-      
-      <div class="puntos-info">
-        <p id="dados-puntos">Puntos: 0</p>
-        <p id="dados-puntos-guardados">Total: 0</p>
-      </div>
-      
-      <div id="dados-controls" class="hidden">
-        <button id="lanzar-dados" class="btn btn-primary">
-          <i class="fas fa-dice"></i> Lanzar Dados
-        </button>
-        <button id="plantarse-dados" class="btn btn-success">
-          <i class="fas fa-check"></i> Plantarse
-        </button>
-      </div>
-      
-      <div id="log-container">
-        <div id="log"></div>
-      </div>
-      
-      <button onclick="exitDadosGame()" class="btn btn-danger exit-button">
-        <i class="fas fa-sign-out-alt"></i> Salir
-      </button>
     </div>
 
     <div id="notification" class="notification hidden"></div>
