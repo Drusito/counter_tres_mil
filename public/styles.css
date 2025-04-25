@@ -314,7 +314,7 @@ label {
   padding: 15px;
   border-radius: var(--border-radius);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 20px;
   box-shadow: var(--box-shadow);

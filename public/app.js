@@ -302,7 +302,7 @@ function syncDadosGameState(data) {
   // Actualizar elementos UI
   document.getElementById('dados-round-counter').textContent = `Ronda: ${dadosGameState.round}`;
   if (data.currentPlayer) {
-    document.getElementById('dados-current-player-name').textContent = data.currentPlayer.name;
+    document.getElementById('turno-jugador').textContent = data.currentPlayer.name;
   }
   
   // Mostrar/ocultar controles según corresponda
