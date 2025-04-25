@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -16,7 +17,7 @@
     <!-- Pantalla de inicio principal -->
     <div id="main-menu-screen" class="screen">
       <div class="logo-container animate__animated animate__bounceIn">
-        <h1>🎰 3000 🎲</h1>
+        <h1 id="main-logo">🎰 3000 🎲</h1>
         <div class="tagline"></div>
       </div>
       <div class="form-container animate__animated animate__fadeInUp">
@@ -103,11 +104,16 @@
       </div>
     </div>
 
-    <!-- Pantalla de sala de espera de dados - Corregida con ID correcto -->
+    <!-- Pantalla de sala de espera de dados -->
     <div id="dados-waiting-room-screen" class="screen hidden">
       <h2>Sala de espera de dados</h2>
       <div class="room-info">
-        <div class="room-code">Código de sala: <span id="dados-room-code-display"></span></div>
+        <div class="room-code">
+          Código de sala: <span id="dados-room-code-display"></span>
+          <button class="copy-button" onclick="copyToClipboard('dados-room-code-display')">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
         <div class="player-list-container">
           <h3>Jugadores</h3>
           <ul id="dados-player-list"></ul>
@@ -173,7 +179,7 @@
       </div>
     </div>
 
-    <!-- Pantalla de juego de dados -->
+    <!-- Pantalla de juego de dados - Versión reorganizada -->
     <div id="dados-game-screen" class="screen hidden">
       <div class="game-header">
         <h1>Tresmil con 4 Dados</h1>
@@ -183,32 +189,34 @@
         </div>
       </div>
       
+      <div class="game-play-area">
+        <div id="dados-container">
+          <div class="dado" id="dado1"></div>
+          <div class="dado" id="dado2"></div>
+          <div class="dado" id="dado3"></div>
+          <div class="dado" id="dado4"></div>
+        </div>
+        
+        <div class="puntos-info">
+          <p id="dados-puntos">+ 0 pts</p>
+          <p id="dados-puntos-guardados">Total: 0</p>
+        </div>
+        
+        <div id="dados-game-controls" class="hidden">
+          <button id="lanzar-dados" class="btn btn-primary">
+            <i class="fas fa-dice"></i> Lanzar Dados
+          </button>
+          <button id="plantarse-dados" class="btn btn-success">
+            <i class="fas fa-check"></i> Plantarse
+          </button>
+        </div>
+        
+        <div id="log-container">
+          <div id="log"></div>
+        </div>
+      </div>
+      
       <div id="dados-counters-container"></div>
-      
-      <div id="dados-container">
-        <div class="dado" id="dado1"></div>
-        <div class="dado" id="dado2"></div>
-        <div class="dado" id="dado3"></div>
-        <div class="dado" id="dado4"></div>
-      </div>
-      
-      <div class="puntos-info">
-        <p id="dados-puntos">+ 0 pts</p>
-        <p class="hidden" id="dados-puntos-guardados">Total: 0</p>
-      </div>
-      
-      <div id="dados-game-controls" class="hidden">
-        <button id="lanzar-dados" class="btn btn-primary">
-          <i class="fas fa-dice"></i> Lanzar Dados
-        </button>
-        <button id="plantarse-dados" class="btn btn-success">
-          <i class="fas fa-check"></i> Plantarse
-        </button>
-      </div>
-      
-      <div id="log-container">
-        <div id="log"></div>
-      </div>
       
       <button onclick="exitDadosGame()" class="btn btn-danger exit-button">
         <i class="fas fa-sign-out-alt"></i> Salir
@@ -276,7 +284,12 @@
     <div id="waiting-room-screen" class="screen hidden">
       <h2>Sala de espera</h2>
       <div class="room-info">
-        <div class="room-code">Código de sala: <span id="room-code-display"></span></div>
+        <div class="room-code">
+          Código de sala: <span id="room-code-display"></span>
+          <button class="copy-button" onclick="copyToClipboard('room-code-display')">
+            <i class="fas fa-copy"></i>
+          </button>
+        </div>
         <div class="player-list-container">
           <h3>Jugadores</h3>
           <ul id="player-list"></ul>
@@ -332,9 +345,9 @@
     <div id="bankrupt-modal" class="modal">
       <div class="modal-content animate__animated animate__wobble">
         <span class="close-button" onclick="document.getElementById('bankrupt-modal').style.display='none'">&times;</span>
-        <h2>¡BANCARROTA!</h2>
+        <h2>¡BANKARROTA!</h2>
         <div class="modal-icon">💀</div>
-        <p>Has perdido todos tus puntos</p>
+        <p>JAJAJJAJAJAJAJA</p>
       </div>
     </div>
 
@@ -342,8 +355,8 @@
       <div class="modal-content animate__animated animate__bounceIn">
         <h2>¡VICTORIA!</h2>
         <div class="modal-icon">🏆</div>
-        <p><span id="winner-name"></span> ha ganado con <span id="winner-score"></span> puntos</p>
-        <button onclick="window.location.reload()" class="btn btn-primary">
+        <p id="victory-message">¡<span id="winner-name"></span> ha ganado con <span id="winner-score"></span> machacantes!</p>
+        <button onclick="window.location.reload()" class="btn btn-primary btn-new-game">
           <i class="fas fa-redo"></i> Nueva partida
         </button>
       </div>

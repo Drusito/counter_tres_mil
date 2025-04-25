@@ -39,6 +39,25 @@ let dadosBloqueados = [false, false, false, false];
 let valoresDados = ['', '', '', ''];
 let tiradaEnProceso = false;
 
+// Función para copiar texto al portapapeles
+function copyToClipboard(elementId) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  const text = element.textContent;
+  
+  // Crear un elemento temporal para copiar
+  const tempInput = document.createElement('input');
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand('copy');
+  document.body.removeChild(tempInput);
+  
+  // Mostrar notificación
+  showNotification(`Código ${text} copiado al portapapeles`, 'success');
+}
+
 function showScreen(screenId) {
   console.log('Cambiando a pantalla:', screenId);
   
@@ -263,6 +282,7 @@ function syncGameState(data) {
 }
 
 // Función para sincronizar el estado del juego de dados
+// Función para sincronizar el estado del juego de dados
 function syncDadosGameState(data) {
   // Si tenemos un currentPlayerIndex en los datos, sincronizar el estado del juego
   if (data.currentPlayerIndex !== undefined) {
@@ -306,6 +326,7 @@ function syncDadosGameState(data) {
     for (let i = 0; i < 4; i++) {
       const dado = document.getElementById(`dado${i + 1}`);
       dado.textContent = valoresDados[i];
+      dado.style.backgroundImage = `url(images/dados/${valoresDados[i]}.png)`;
       
       if (dadosBloqueados[i]) {
         dado.classList.add('bloqueado');
@@ -318,7 +339,6 @@ function syncDadosGameState(data) {
     document.getElementById('puntos').textContent = `${total}`;
   }
 }
-
 // Funciones para el juego
 function increaseScore() {
   if (offlineMode) {
@@ -876,17 +896,35 @@ socket.on('scoreUpdated', function(data) {
   }
 });
 
-// Nuevo evento para actualización de puntuación en juego de dados
+// Actualizar manejo del evento dadosScoreUpdated
 socket.on('dadosScoreUpdated', function(data) {
   // Actualizar score en juego de dados
   dadosGameState.players = data.players;
   
+  // Si se resetea el total (bancarrota completa)
+  if (data.resetTotal) {
+    const playerCounter = document.getElementById(`dados-player-${data.playerIndex}`);
+    if (playerCounter) {
+      const scoreDisplay = playerCounter.querySelector('.score-display');
+      if (scoreDisplay) {
+        scoreDisplay.textContent = '0';
+      }
+    }
+  }
+  
+  // Actualizar contador de puntos actuales
   const playerCounter = document.getElementById(`dados-player-${data.playerIndex}`);
   if (playerCounter) {
     const currentRoundScore = playerCounter.querySelector('.current-round-score');
     if (currentRoundScore) {
       currentRoundScore.textContent = `Esta ronda: ${data.currentRoundScore}`;
     }
+  }
+  
+  // Actualizar puntos guardados en la UI para jugador actual
+  const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
+  if (miIndice !== -1 && document.getElementById('dados-puntos-guardados')) {
+    document.getElementById('dados-puntos-guardados').textContent = `Total: ${dadosGameState.players[miIndice].totalScore || 0}`;
   }
 });
 
@@ -900,7 +938,7 @@ socket.on('playerBankrupt', function(data) {
     document.getElementById('bankrupt-modal').style.display = 'flex';
   }
   
-  showNotification(`¡${gameState.players[data.playerIndex].name} ha caído en bancarrota!`, 'warning');
+  showNotification(`¡${gameState.players[data.playerIndex].name} ha caído en bankarrota!`, 'warning');
 });
 
 // Nuevo evento para bancarrota en juego de dados
@@ -914,7 +952,7 @@ socket.on('dadosPlayerBankrupt', function(data) {
     document.getElementById('bankrupt-modal').style.display = 'flex';
   }
   
-  showNotification(`¡${dadosGameState.players[data.playerIndex].name} ha caído en bancarrota!`, 'warning');
+  showNotification(`¡${dadosGameState.players[data.playerIndex].name} ha caído en bankarrota!`, 'warning');
 });
 
 socket.on('gameWon', function(data) {
@@ -929,16 +967,22 @@ socket.on('gameWon', function(data) {
   }
 });
 
-// Nuevo evento para victoria en juego de dados
+// Actualizado evento para victoria en juego de dados
 socket.on('dadosGameWon', function(data) {
+  // Mostrar el modal de victoria con los datos del ganador
   document.getElementById('winner-name').textContent = data.winner.name;
   document.getElementById('winner-score').textContent = data.winner.totalScore;
   document.getElementById('victory-modal').style.display = 'flex';
   
+  // Ocultar controles
   document.getElementById('dados-game-controls').classList.add('hidden');
   
+  // Efectos para el ganador
   if (data.winner.id === socket.id) {
     document.body.classList.add('shimmer');
+    showNotification('¡Has ganado la partida!', 'success');
+  } else {
+    showNotification(`${data.winner.name} ha ganado la partida`, 'info');
   }
 });
 
@@ -951,12 +995,14 @@ socket.on('dadosActualizados', function(data) {
   
   // Actualizar visualización de dados
   for (let i = 0; i < 4; i++) {
-    document.getElementById(`dado${i + 1}`).textContent = valoresDados[i];
+    const dado = document.getElementById(`dado${i + 1}`);
+    dado.textContent = valoresDados[i];
+    dado.style.backgroundImage = `url(images/dados/${valoresDados[i]}.png)`;
     
     if (dadosBloqueados[i]) {
-      document.getElementById(`dado${i + 1}`).classList.add('bloqueado');
+      dado.classList.add('bloqueado');
     } else {
-      document.getElementById(`dado${i + 1}`).classList.remove('bloqueado');
+      dado.classList.remove('bloqueado');
     }
   }
   
@@ -972,6 +1018,7 @@ socket.on('dadosActualizados', function(data) {
 socket.on('dadosAnimacion', function(data) {
   const dado = document.getElementById(`dado${data.dadoId}`);
   dado.textContent = data.valor;
+  dado.style.backgroundImage = `url(images/dados/${data.valor}.png)`;
 });
 
 socket.on('error', function(data) {
