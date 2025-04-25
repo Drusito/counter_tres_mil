@@ -14,11 +14,31 @@ let gameState = {
   roomCreator: null
 };
 
+// Estado para el juego de dados
+let dadosGameState = {
+  roomId: null,
+  players: [],
+  isCreator: false,
+  currentTurn: 0,
+  round: 1,
+  roomCreator: null,
+  gameType: 'dados'
+};
+
 // Variables para controlar si ya se cargaron los datos
 let historyDataLoaded = false;
 let playersDataLoaded = false;
 
-// Función para cambiar entre pantallas
+// Variables específicas para el modo dados
+// Valores posibles de los dados
+const valores = ['A', 'K', 'Q', 'J', 'R', 'N'];
+
+// Estado para el juego de dados
+let total = 0;
+let dadosBloqueados = [false, false, false, false];
+let valoresDados = ['-', '-', '-', '-'];
+let tiradaEnProceso = false;
+
 function showScreen(screenId) {
   console.log('Cambiando a pantalla:', screenId);
   
@@ -31,15 +51,8 @@ function showScreen(screenId) {
   const screenToShow = document.getElementById(screenId + '-screen');
   if (screenToShow) {
     screenToShow.classList.remove('hidden');
-  }
-  
-  // Si estamos mostrando la pantalla de estadísticas, cargar datos automáticamente
-  if (screenId === 'stats') {
-    console.log('Cargando estadísticas automáticamente...');
-    // Mostrar pestaña de historial por defecto y cargar datos
-    setTimeout(() => {
-      showStatsTab('history');
-    }, 100);
+  } else {
+    console.error(`Pantalla no encontrada: ${screenId}-screen`);
   }
 }
 
@@ -249,6 +262,63 @@ function syncGameState(data) {
   updatePlayerCounters(gameState.players);
 }
 
+// Función para sincronizar el estado del juego de dados
+function syncDadosGameState(data) {
+  // Si tenemos un currentPlayerIndex en los datos, sincronizar el estado del juego
+  if (data.currentPlayerIndex !== undefined) {
+    dadosGameState.currentTurn = data.currentPlayerIndex;
+  }
+  
+  // Si tenemos un array de jugadores, actualizar nuestro array de jugadores
+  if (data.players) {
+    dadosGameState.players = data.players;
+  }
+  
+  // Si tenemos un número de ronda, actualizar nuestra ronda
+  if (data.round) {
+    dadosGameState.round = data.round;
+  }
+  
+  // Actualizar elementos UI
+  document.getElementById('dados-round-counter').textContent = `Ronda: ${dadosGameState.round}`;
+  if (data.currentPlayer) {
+    document.getElementById('dados-current-player-name').textContent = data.currentPlayer.name;
+  }
+  
+  // Mostrar/ocultar controles según corresponda
+  if (data.currentPlayer && data.currentPlayer.id === socket.id) {
+    document.getElementById('dados-game-controls').classList.remove('hidden');
+  } else {
+    document.getElementById('dados-game-controls').classList.add('hidden');
+  }
+  
+  // Actualizar contadores visuales
+  updateDadosPlayerCounters(dadosGameState.players);
+  
+  // Si tenemos datos de dados, actualizar el estado de los dados
+  if (data.dadosState) {
+    // Sincronizar valores de dados
+    valoresDados = data.dadosState.valoresDados;
+    dadosBloqueados = data.dadosState.dadosBloqueados;
+    total = data.dadosState.total;
+    
+    // Actualizar visualización de dados
+    for (let i = 0; i < 4; i++) {
+      const dado = document.getElementById(`dado${i + 1}`);
+      dado.textContent = valoresDados[i];
+      
+      if (dadosBloqueados[i]) {
+        dado.classList.add('bloqueado');
+      } else {
+        dado.classList.remove('bloqueado');
+      }
+    }
+    
+    // Actualizar puntos
+    document.getElementById('puntos').textContent = `Puntos: ${total}`;
+  }
+}
+
 // Funciones para el juego
 function increaseScore() {
   if (offlineMode) {
@@ -334,6 +404,19 @@ function createRoom() {
   
   socket.emit('createRoom', {
     playerName: playerName,
+    maxPlayers: 8,
+    gameType: 'normal'
+  });
+}
+
+// En app.js, verifica que esta función esté bien implementada
+function createDadosRoom() {
+  const playerName = document.getElementById('dados-player-name').value.trim() || `Jugador${Math.floor(Math.random() * 1000)}`;
+  
+  console.log('Creando sala de dados para:', playerName);
+  
+  socket.emit('createDadosRoom', {
+    playerName: playerName,
     maxPlayers: 8
   });
 }
@@ -353,12 +436,36 @@ function joinRoom() {
   });
 }
 
+function joinDadosRoom() {
+  const playerName = document.getElementById('dados-player-name').value.trim() || `Jugador${Math.floor(Math.random() * 1000)}`;
+  const roomCode = document.getElementById('dados-room-code').value.trim().toUpperCase();
+  
+  if (!roomCode) {
+    showNotification('Introduce un código de sala válido', 'error');
+    return;
+  }
+  
+  socket.emit('joinRoom', {
+    playerName: playerName,
+    roomId: roomCode
+  });
+}
+
 function leaveRoom() {
   socket.emit('leaveRoom');
   showScreen('online-menu');
 }
 
+function leaveDadosRoom() {
+  socket.emit('leaveRoom');
+  showScreen('dados-menu');
+}
+
 function startGame() {
+  socket.emit('startGame');
+}
+
+function startDadosGame() {
   socket.emit('startGame');
 }
 
@@ -391,6 +498,35 @@ function updatePlayerList(players) {
   });
 }
 
+// Función para actualizar lista de jugadores en modo dados
+function updateDadosPlayerList(players) {
+  const playerList = document.getElementById('dados-player-list');
+  playerList.innerHTML = '';
+  
+  players.forEach((player) => {
+    const li = document.createElement('li');
+    
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'player-icon';
+    iconSpan.innerHTML = '<i class="fas fa-user"></i>';
+    li.appendChild(iconSpan);
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = player.name;
+    li.appendChild(nameSpan);
+    
+    // Marcar el creador de la sala
+    if (player.id === dadosGameState.roomCreator) {
+      const creatorBadge = document.createElement('span');
+      creatorBadge.className = 'creator-badge';
+      creatorBadge.textContent = 'Anfitrión';
+      li.appendChild(creatorBadge);
+    }
+    
+    playerList.appendChild(li);
+  });
+}
+
 // Función para crear contadores en modo online
 function createPlayerCounters(players) {
   const countersContainer = document.getElementById('counters-container');
@@ -403,6 +539,32 @@ function createPlayerCounters(players) {
     
     // Marcar el jugador activo
     if (index === gameState.currentTurn) {
+      counterDiv.classList.add('active-turn');
+    }
+    
+    // Añadir contenido
+    counterDiv.innerHTML = `
+      <h3>${player.name}</h3>
+      <div class="score-display">${player.totalScore}</div>
+      <div class="current-round-score">Esta ronda: ${player.currentRoundScore}</div>
+    `;
+    
+    countersContainer.appendChild(counterDiv);
+  });
+}
+
+// Función para crear contadores para el modo dados online
+function createDadosPlayerCounters(players) {
+  const countersContainer = document.getElementById('dados-counters-container');
+  countersContainer.innerHTML = '';
+  
+  players.forEach((player, index) => {
+    const counterDiv = document.createElement('div');
+    counterDiv.className = 'player-counter';
+    counterDiv.id = `dados-player-${index}`;
+    
+    // Marcar el jugador activo
+    if (index === dadosGameState.currentTurn) {
       counterDiv.classList.add('active-turn');
     }
     
@@ -445,6 +607,41 @@ function updatePlayerCounters(players) {
   });
 }
 
+// Función para actualizar contadores en modo dados online
+function updateDadosPlayerCounters(players) {
+  players.forEach((player, index) => {
+    const counterDiv = document.getElementById(`dados-player-${index}`);
+    
+    if (counterDiv) {
+      // Actualizar valores
+      const scoreDisplay = counterDiv.querySelector('.score-display');
+      const currentRoundScore = counterDiv.querySelector('.current-round-score');
+      
+      if (scoreDisplay) {
+        scoreDisplay.textContent = player.totalScore;
+      }
+      
+      if (currentRoundScore) {
+        currentRoundScore.textContent = `Esta ronda: ${player.currentRoundScore}`;
+      }
+      
+      // Marcar turno activo
+      if (index === dadosGameState.currentTurn) {
+        counterDiv.classList.add('active-turn');
+      } else {
+        counterDiv.classList.remove('active-turn');
+      }
+    }
+  });
+  
+  // Actualizar información de turno en la pantalla
+  document.getElementById('dados-round-counter').textContent = `Ronda: ${dadosGameState.round}`;
+  
+  if (dadosGameState.players.length > 0 && dadosGameState.currentTurn < dadosGameState.players.length) {
+    document.getElementById('dados-current-player-name').textContent = dadosGameState.players[dadosGameState.currentTurn].name;
+  }
+}
+
 // Función para mostrar notificaciones
 function showNotification(message, type = 'info') {
   const notification = document.getElementById('notification');
@@ -476,99 +673,236 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
+// Funciones para el modo dados online
+function lanzarDadosOnline() {
+  socket.emit('lanzarDados');
+}
+
+function plantarseDadosOnline() {
+  socket.emit('plantarseDados');
+}
+
+function exitDadosGame() {
+  leaveDadosRoom();
+}
+
+// Función para añadir mensajes al log
+function addLog(mensaje, tipo = '') {
+  const log = document.getElementById('log');
+  log.innerHTML += `<div class="${tipo}">${mensaje}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
 // Eventos de socket
 socket.on('roomCreated', function(data) {
-  gameState.roomId = data.roomId;
-  gameState.isCreator = true;
-  gameState.roomCreator = socket.id;
-  
-  document.getElementById('room-code-display').textContent = data.roomId;
-  updatePlayerList([data.player]);
-  
-  document.getElementById('creator-controls').classList.remove('hidden');
-  showScreen('waiting-room');
-  showNotification('Sala creada con éxito. Código: ' + data.roomId, 'success');
+  if (data.gameType === 'dados') {
+    // Sala para juego de dados
+    dadosGameState.roomId = data.roomId;
+    dadosGameState.isCreator = true;
+    dadosGameState.roomCreator = socket.id;
+    
+    document.getElementById('dados-room-code-display').textContent = data.roomId;
+    updateDadosPlayerList([data.player]);
+    
+    document.getElementById('dados-creator-controls').classList.remove('hidden');
+    showScreen('dados-waiting-room');
+    showNotification('Sala de dados creada con éxito. Código: ' + data.roomId, 'success');
+  } else {
+    // Sala para juego normal
+    gameState.roomId = data.roomId;
+    gameState.isCreator = true;
+    gameState.roomCreator = socket.id;
+    
+    document.getElementById('room-code-display').textContent = data.roomId;
+    updatePlayerList([data.player]);
+    
+    document.getElementById('creator-controls').classList.remove('hidden');
+    showScreen('waiting-room');
+    showNotification('Sala creada con éxito. Código: ' + data.roomId, 'success');
+  }
 });
 
 socket.on('roomJoined', function(data) {
-  gameState.roomId = data.roomId;
-  gameState.isCreator = data.isCreator;
-  gameState.players = data.players;
-  gameState.roomCreator = data.creatorId;
-  
-  document.getElementById('room-code-display').textContent = data.roomId;
-  updatePlayerList(data.players);
-  
-  if (data.isCreator) {
-    document.getElementById('creator-controls').classList.remove('hidden');
+  if (data.gameType === 'dados') {
+    // Sala para juego de dados
+    dadosGameState.roomId = data.roomId;
+    dadosGameState.isCreator = data.isCreator;
+    dadosGameState.players = data.players;
+    dadosGameState.roomCreator = data.creatorId;
+    
+    document.getElementById('dados-room-code-display').textContent = data.roomId;
+    updateDadosPlayerList(data.players);
+    
+    if (data.isCreator) {
+      document.getElementById('dados-creator-controls').classList.remove('hidden');
+    } else {
+      document.getElementById('dados-creator-controls').classList.add('hidden');
+    }
+    
+    showScreen('dados-waiting-room');
+    showNotification('Te has unido a la sala de dados', 'success');
   } else {
-    document.getElementById('creator-controls').classList.add('hidden');
+    // Sala para juego normal
+    gameState.roomId = data.roomId;
+    gameState.isCreator = data.isCreator;
+    gameState.players = data.players;
+    gameState.roomCreator = data.creatorId;
+    
+    document.getElementById('room-code-display').textContent = data.roomId;
+    updatePlayerList(data.players);
+    
+    if (data.isCreator) {
+      document.getElementById('creator-controls').classList.remove('hidden');
+    } else {
+      document.getElementById('creator-controls').classList.add('hidden');
+    }
+    
+    showScreen('waiting-room');
+    showNotification('Te has unido a la sala', 'success');
   }
-  
-  showScreen('waiting-room');
-  showNotification('Te has unido a la sala', 'success');
 });
 
 socket.on('playerJoined', function(data) {
-  gameState.players = data.players;
-  updatePlayerList(data.players);
-  showNotification(`${data.player.name} se ha unido a la sala`, 'info');
+  if (data.gameType === 'dados') {
+    // Actualizar para juego de dados
+    dadosGameState.players = data.players;
+    updateDadosPlayerList(data.players);
+    showNotification(`${data.player.name} se ha unido a la sala de dados`, 'info');
+  } else {
+    // Actualizar para juego normal
+    gameState.players = data.players;
+    updatePlayerList(data.players);
+    showNotification(`${data.player.name} se ha unido a la sala`, 'info');
+  }
 });
 
 socket.on('playerLeft', function(data) {
-  gameState.players = data.players;
-  updatePlayerList(data.players);
-  
-  if (data.newCreator && data.newCreator === socket.id) {
-    gameState.isCreator = true;
-    document.getElementById('creator-controls').classList.remove('hidden');
-    showNotification('Ahora eres el anfitrión de la sala', 'info');
+  if (data.gameType === 'dados') {
+    // Actualizar para juego de dados
+    dadosGameState.players = data.players;
+    updateDadosPlayerList(data.players);
+    
+    if (data.newCreator && data.newCreator === socket.id) {
+      dadosGameState.isCreator = true;
+      document.getElementById('dados-creator-controls').classList.remove('hidden');
+      showNotification('Ahora eres el anfitrión de la sala de dados', 'info');
+    }
+    
+    showNotification('Un jugador ha abandonado la sala de dados', 'info');
+  } else {
+    // Actualizar para juego normal
+    gameState.players = data.players;
+    updatePlayerList(data.players);
+    
+    if (data.newCreator && data.newCreator === socket.id) {
+      gameState.isCreator = true;
+      document.getElementById('creator-controls').classList.remove('hidden');
+      showNotification('Ahora eres el anfitrión de la sala', 'info');
+    }
+    
+    showNotification('Un jugador ha abandonado la sala', 'info');
   }
-  
-  showNotification('Un jugador ha abandonado la sala', 'info');
 });
 
 socket.on('gameStarted', function(data) {
-  syncGameState(data);
-  
-  // Crear contadores de jugadores si aún no se han creado
-  createPlayerCounters(data.players);
-  
-  showScreen('game');
-  showNotification('¡El juego ha comenzado!', 'success');
+  if (data.gameType === 'dados') {
+    // Iniciar juego de dados
+    syncDadosGameState(data);
+    
+    // Resetear los dados
+    resetearDados();
+    
+    // Crear contadores de jugadores
+    createDadosPlayerCounters(data.players);
+    
+    // Limpiar log
+    document.getElementById('log').innerHTML = '';
+    addLog('¡Juego de dados iniciado!', 'mensaje-exito');
+    
+    showScreen('dados-game');
+    showNotification('¡El juego de dados ha comenzado!', 'success');
+  } else {
+    // Iniciar juego normal
+    syncGameState(data);
+    
+    // Crear contadores de jugadores
+    createPlayerCounters(data.players);
+    
+    showScreen('game');
+    showNotification('¡El juego ha comenzado!', 'success');
+  }
 });
 
 socket.on('turnChanged', function(data) {
-  syncGameState(data);
-  
-  // Mostrar notificación solo si es nuestro turno
-  if (data.currentPlayer && data.currentPlayer.id === socket.id) {
-    showNotification('¡Es tu turno!', 'info');
+  if (data.gameType === 'dados') {
+    // Cambio de turno en juego de dados
+    syncDadosGameState(data);
+    
+    // Mostrar notificación solo si es nuestro turno
+    if (data.currentPlayer && data.currentPlayer.id === socket.id) {
+      showNotification('¡Es tu turno en el juego de dados!', 'info');
+    }
+  } else {
+    // Cambio de turno en juego normal
+    syncGameState(data);
+    
+    // Mostrar notificación solo si es nuestro turno
+    if (data.currentPlayer && data.currentPlayer.id === socket.id) {
+      showNotification('¡Es tu turno!', 'info');
+    }
   }
 });
 
 socket.on('scoreUpdated', function(data) {
-  gameState.players = data.players;
-  
-  const playerCounter = document.getElementById(`player-${data.playerIndex}`);
-  if (playerCounter) {
-    const currentRoundScore = playerCounter.querySelector('.current-round-score');
-    if (currentRoundScore) {
-      currentRoundScore.textContent = `Esta ronda: ${data.currentRoundScore}`;
+  if (data.gameType === 'dados') {
+    // Actualizar score en juego de dados
+    dadosGameState.players = data.players;
+    
+    const playerCounter = document.getElementById(`dados-player-${data.playerIndex}`);
+    if (playerCounter) {
+      const currentRoundScore = playerCounter.querySelector('.current-round-score');
+      if (currentRoundScore) {
+        currentRoundScore.textContent = `Esta ronda: ${data.currentRoundScore}`;
+      }
+    }
+  } else {
+    // Actualizar score en juego normal
+    gameState.players = data.players;
+    
+    const playerCounter = document.getElementById(`player-${data.playerIndex}`);
+    if (playerCounter) {
+      const currentRoundScore = playerCounter.querySelector('.current-round-score');
+      if (currentRoundScore) {
+        currentRoundScore.textContent = `Esta ronda: ${data.currentRoundScore}`;
+      }
     }
   }
 });
 
 socket.on('playerBankrupt', function(data) {
-  gameState.players = data.players;
-  
-  updatePlayerCounters(data.players);
-  
-  if (data.playerIndex === gameState.players.findIndex(p => p.id === socket.id)) {
-    document.getElementById('bankrupt-modal').style.display = 'flex';
+  if (data.gameType === 'dados') {
+    // Bancarrota en juego de dados
+    dadosGameState.players = data.players;
+    
+    updateDadosPlayerCounters(data.players);
+    
+    if (data.playerIndex === dadosGameState.players.findIndex(p => p.id === socket.id)) {
+      document.getElementById('bankrupt-modal').style.display = 'flex';
+    }
+    
+    showNotification(`¡${dadosGameState.players[data.playerIndex].name} ha caído en bancarrota!`, 'warning');
+  } else {
+    // Bancarrota en juego normal
+    gameState.players = data.players;
+    
+    updatePlayerCounters(data.players);
+    
+    if (data.playerIndex === gameState.players.findIndex(p => p.id === socket.id)) {
+      document.getElementById('bankrupt-modal').style.display = 'flex';
+    }
+    
+    showNotification(`¡${gameState.players[data.playerIndex].name} ha caído en bancarrota!`, 'warning');
   }
-  
-  showNotification(`¡${gameState.players[data.playerIndex].name} ha caído en bancarrota!`, 'warning');
 });
 
 socket.on('gameWon', function(data) {
@@ -576,11 +910,47 @@ socket.on('gameWon', function(data) {
   document.getElementById('winner-score').textContent = data.winner.totalScore;
   document.getElementById('victory-modal').style.display = 'flex';
   
-  document.getElementById('game-controls').classList.add('hidden');
+  if (data.gameType === 'dados') {
+    document.getElementById('dados-game-controls').classList.add('hidden');
+  } else {
+    document.getElementById('game-controls').classList.add('hidden');
+  }
   
   if (data.winner.id === socket.id) {
     document.body.classList.add('shimmer');
   }
+});
+
+// Eventos específicos para el juego de dados
+socket.on('dadosActualizados', function(data) {
+  // Actualizar el estado de los dados
+  valoresDados = data.valoresDados;
+  dadosBloqueados = data.dadosBloqueados;
+  total = data.total;
+  
+  // Actualizar visualización de dados
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`dado${i + 1}`).textContent = valoresDados[i];
+    
+    if (dadosBloqueados[i]) {
+      document.getElementById(`dado${i + 1}`).classList.add('bloqueado');
+    } else {
+      document.getElementById(`dado${i + 1}`).classList.remove('bloqueado');
+    }
+  }
+  
+  // Actualizar puntos
+  document.getElementById('puntos').textContent = `Puntos: ${total}`;
+  
+  // Si hay mensaje de log, añadirlo
+  if (data.logMessage) {
+    addLog(data.logMessage, data.logType || '');
+  }
+});
+
+socket.on('dadosAnimacion', function(data) {
+  const dado = document.getElementById(`dado${data.dadoId}`);
+  dado.textContent = data.valor;
 });
 
 socket.on('error', function(data) {
@@ -595,6 +965,20 @@ socket.on('gameHistoryData', function(data) {
 socket.on('playerStatsData', function(data) {
   console.log('Recibidos datos de estadísticas vía Socket.io (método obsoleto)');
 });
+
+// Funciones para resetear dados
+function resetearDados() {
+  dadosBloqueados = [false, false, false, false];
+  valoresDados = ['-', '-', '-', '-'];
+  total = 0;
+  
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`dado${i}`).textContent = '-';
+    document.getElementById(`dado${i}`).classList.remove('bloqueado');
+  }
+  
+  document.getElementById('puntos').textContent = `Puntos: 0`;
+}
 
 // Función para cargar el historial de partidas desde el servidor
 function loadGameHistory() {
@@ -842,6 +1226,7 @@ function showStatsTab(tabName) {
     console.error('No se encontró la pestaña:', tabName + '-tab');
   }
   
+  // Activar el botón correspondiente
   // Activar el botón correspondiente
   const buttonToActivate = document.getElementById(tabName + '-tab-btn');
   if (buttonToActivate) {

@@ -2,7 +2,7 @@
 const admin = require('firebase-admin');
 
 // Credenciales de Firebase
-const serviceAccount = require('/etc/secrets/firebase-credentials.json');
+const serviceAccount = require('./etc/secrets/firebase-credentials.json');
 
 let db;
 
@@ -60,6 +60,30 @@ async function registerGame(gameData) {
   }
 }
 
+async function registerDadosGame(gameData) {
+  try {
+    if (!db) return null;
+
+    // Asegurarse de que tenga el flag de modo dados
+    gameData.gameMode = 'dados';
+
+    const gamesRef = db.ref('dados_games');
+    const newGameRef = await gamesRef.push(gameData);
+
+    // Añadir ID al gameData antes de actualizar estadísticas
+    gameData.id = newGameRef.key;
+
+    console.log('Partida de dados registrada con ID:', newGameRef.key);
+
+    await updatePlayerStats(gameData);
+
+    return newGameRef.key;
+  } catch (error) {
+    console.error('Error al registrar partida de dados:', error);
+    return null;
+  }
+}
+
 async function updatePlayerStats(gameData) {
   try {
     if (!db) return;
@@ -100,6 +124,20 @@ async function updatePlayerStats(gameData) {
       if (!playerData.gamesPlayed) playerData.gamesPlayed = [];
       playerData.gamesPlayed.push(gameData.id);
 
+      // Añadir información sobre el tipo de juego
+      if (!playerData.gameTypes) playerData.gameTypes = {};
+      const gameType = gameData.gameMode || 'standard';
+      if (!playerData.gameTypes[gameType]) {
+        playerData.gameTypes[gameType] = {
+          games: 0,
+          wins: 0,
+          totalScore: 0
+        };
+      }
+      playerData.gameTypes[gameType].games += 1;
+      if (isWinner) playerData.gameTypes[gameType].wins += 1;
+      playerData.gameTypes[gameType].totalScore += score;
+
       await playerRef.set(playerData);
     }
   } catch (error) {
@@ -111,18 +149,40 @@ async function getGameHistory(limit = 10) {
   try {
     if (!db) return [];
 
+    const allGames = [];
+    
+    // Obtener partidas estándar
     const gamesRef = db.ref('games');
-    const snapshot = await gamesRef.orderByChild('timestamp').limitToLast(limit).once('value');
-    const games = [];
-
-    snapshot.forEach(childSnapshot => {
-      games.push({
+    const gamesSnapshot = await gamesRef.orderByChild('timestamp').limitToLast(limit).once('value');
+    
+    gamesSnapshot.forEach(childSnapshot => {
+      const game = {
         id: childSnapshot.key,
-        ...childSnapshot.val()
-      });
+        ...childSnapshot.val(),
+        gameMode: 'standard'
+      };
+      // Asegurarse de que gameMode esté establecido incluso para partidas antiguas
+      if (!game.gameMode) game.gameMode = 'standard';
+      allGames.push(game);
     });
-
-    return games.reverse();
+    
+    // Obtener partidas de dados
+    const dadosGamesRef = db.ref('dados_games');
+    const dadosGamesSnapshot = await dadosGamesRef.orderByChild('timestamp').limitToLast(limit).once('value');
+    
+    dadosGamesSnapshot.forEach(childSnapshot => {
+      const game = {
+        id: childSnapshot.key,
+        ...childSnapshot.val(),
+        gameMode: 'dados'
+      };
+      allGames.push(game);
+    });
+    
+    // Ordenar por timestamp y devolver los más recientes
+    return allGames
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+      .slice(0, limit);
   } catch (error) {
     console.error('Error al obtener historial de partidas:', error);
     return [];
@@ -138,12 +198,49 @@ async function getPlayerStats() {
     const players = [];
 
     snapshot.forEach(childSnapshot => {
-      players.push(childSnapshot.val());
+      const playerData = childSnapshot.val();
+      
+      // Añadir estadísticas para el modo dados si existen
+      if (playerData.gameTypes && playerData.gameTypes.dados) {
+        playerData.dadosGames = playerData.gameTypes.dados.games || 0;
+        playerData.dadosWins = playerData.gameTypes.dados.wins || 0;
+        playerData.dadosTotalScore = playerData.gameTypes.dados.totalScore || 0;
+      } else {
+        playerData.dadosGames = 0;
+        playerData.dadosWins = 0;
+        playerData.dadosTotalScore = 0;
+      }
+      
+      players.push(playerData);
     });
 
     return players.sort((a, b) => b.wins - a.wins);
   } catch (error) {
     console.error('Error al obtener estadísticas de jugadores:', error);
+    return [];
+  }
+}
+
+// Nueva función para obtener el historial específico de partidas de dados
+async function getDadosGameHistory(limit = 10) {
+  try {
+    if (!db) return [];
+
+    const dadosGamesRef = db.ref('dados_games');
+    const snapshot = await dadosGamesRef.orderByChild('timestamp').limitToLast(limit).once('value');
+    const games = [];
+
+    snapshot.forEach(childSnapshot => {
+      games.push({
+        id: childSnapshot.key,
+        ...childSnapshot.val(),
+        gameMode: 'dados'
+      });
+    });
+
+    return games.reverse();
+  } catch (error) {
+    console.error('Error al obtener historial de partidas de dados:', error);
     return [];
   }
 }
@@ -155,6 +252,8 @@ function encodePlayerName(name) {
 module.exports = {
   db,
   registerGame,
+  registerDadosGame,
   getGameHistory,
+  getDadosGameHistory,
   getPlayerStats
 };

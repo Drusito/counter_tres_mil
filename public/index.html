@@ -21,6 +21,9 @@
       </div>
       <div class="form-container animate__animated animate__fadeInUp">
         <div class="button-group">
+          <button onclick="showScreen('dados-menu')" class="btn btn-primary btn-large">
+            <i class="fas fa-dice"></i> Modo Dados
+          </button>
           <button onclick="showScreen('online-menu')" class="btn btn-primary btn-large">
             <i class="fas fa-globe"></i> Modo Online
           </button>
@@ -67,6 +70,37 @@
       </div>
     </div>
 
+    <!-- Pantalla Modo Dados -->
+    <div id="modo-dados-screen" class="screen hidden">
+      <h2>Tresmil con 4 Dados</h2>
+      <div class="form-container">
+        <div class="modo-dados-instructions">
+          <p>Lanza los dados y suma puntos. Cuando un dado puntúa, se bloquea.</p>
+          <p>Puedes seguir lanzando los dados restantes o plantarte para guardar los puntos.</p>
+          <p>Si no puntúas en un lanzamiento, pierdes todos los puntos acumulados en la ronda.</p>
+          <p><strong>Puntuaciones:</strong></p>
+          <ul>
+            <li>3 Ases (AAA): 1000 puntos</li>
+            <li>3 Reyes (KKK): 500 puntos</li>
+            <li>3 Reinas (QQQ): 400 puntos</li>
+            <li>3 Jotas (JJJ): 300 puntos</li>
+            <li>3 Rojos (RRR): 200 puntos</li>
+            <li>3 Negras (NNN): Bancarrota</li>
+            <li>As individual: 100 puntos</li>
+            <li>Rey individual: 50 puntos</li>
+          </ul>
+        </div>
+        <div class="button-group">
+          <button onclick="startDadosGame()" class="btn btn-primary">
+            <i class="fas fa-play"></i> Jugar
+          </button>
+          <button onclick="showScreen('main-menu')" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Pantalla para modo offline -->
     <div id="offline-mode-screen" class="screen hidden">
       <h2>Modo Offline</h2>
@@ -83,6 +117,66 @@
         <button onclick="showScreen('main-menu')" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Volver
         </button>
+      </div>
+    </div>
+
+    <!-- Pantalla de juego de dados -->
+    <div id="game-dados-screen" class="screen hidden">
+      <div class="game-header">
+        <h1>Tresmil con 4 Dados</h1>
+        <div class="game-info">
+          <p id="dados-round-counter">Ronda: 1</p>
+          <p id="dados-turn-indicator">Turno de: <span id="dados-player-name"></span></p>
+        </div>
+      </div>
+      
+      <div id="dados-container">
+        <div class="dado" id="dado1"></div>
+        <div class="dado" id="dado2"></div>
+        <div class="dado" id="dado3"></div>
+        <div class="dado" id="dado4"></div>
+      </div>
+      
+      <div class="puntos-info">
+        <p id="dados-puntos">Puntos: 0</p>
+        <p id="dados-puntos-guardados">Total: 0</p>
+      </div>
+      
+      <div id="dados-players-container"></div>
+      
+      <div id="dados-controls">
+        <button id="lanzar-dados" class="btn btn-primary">
+          <i class="fas fa-dice"></i> Lanzar Dados
+        </button>
+        <button id="plantarse-dados" class="btn btn-success">
+          <i class="fas fa-check"></i> Plantarse
+        </button>
+      </div>
+      
+      <div id="log-container">
+        <div id="log"></div>
+      </div>
+      
+      <button onclick="exitDadosGame()" class="btn btn-danger exit-button">
+        <i class="fas fa-sign-out-alt"></i> Salir
+      </button>
+    </div>
+
+    <!-- Modal de configuración para el juego de dados -->
+    <div id="dados-setup-modal" class="modal">
+      <div class="modal-content">
+        <h2>Configuración de Jugadores</h2>
+        <div class="form-container">
+          <label for="dados-player-count">Número de jugadores:</label>
+          <input type="number" id="dados-player-count" min="1" max="8" value="4">
+          <button id="confirmar-dados-jugadores" class="btn btn-primary">
+            <i class="fas fa-check"></i> Confirmar
+          </button>
+          <div id="dados-player-inputs" class="hidden"></div>
+          <button id="iniciar-dados-juego" class="btn btn-success hidden">
+            <i class="fas fa-play"></i> Iniciar juego
+          </button>
+        </div>
       </div>
     </div>
 
@@ -201,11 +295,105 @@
         </button>
       </div>
     </div>
+    <div id="dados-menu-screen" class="screen hidden">
+      <h2>Modo Dados</h2>
+      <div class="form-container">
+        <input type="text" id="dados-player-name" placeholder="Tu nombre" maxlength="15">
+        <div class="button-group">
+          <button onclick="createDadosRoom()" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Crear sala
+          </button>
+          <button onclick="showScreen('join-dados-room')" class="btn btn-secondary">
+            <i class="fas fa-sign-in-alt"></i> Unirse a sala
+          </button>
+          <button onclick="showScreen('main-menu')" class="btn btn-info">
+            <i class="fas fa-arrow-left"></i> Volver
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pantalla para unirse a sala de dados -->
+    <div id="join-dados-room-screen" class="screen hidden">
+      <h2>Unirse a sala de dados</h2>
+      <div class="form-container">
+        <input type="text" id="dados-room-code" placeholder="Código de sala" maxlength="6">
+        <button onclick="joinDadosRoom()" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt"></i> Unirse
+        </button>
+        <button onclick="showScreen('dados-menu')" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Volver
+        </button>
+      </div>
+    </div>
+    
+    <!-- Pantalla de sala de espera de dados -->
+    <div id="waiting-dados-room-screen" class="screen hidden">
+      <h2>Sala de espera de dados</h2>
+      <div class="room-info">
+        <div class="room-code">Código de sala: <span id="dados-room-code-display"></span></div>
+        <div class="player-list-container">
+          <h3>Jugadores</h3>
+          <ul id="dados-player-list"></ul>
+        </div>
+        <div id="dados-creator-controls" class="hidden">
+          <button onclick="startDadosGame()" class="btn btn-primary">
+            <i class="fas fa-play"></i> Iniciar juego
+          </button>
+        </div>
+        <button onclick="leaveDadosRoom()" class="btn btn-danger">
+          <i class="fas fa-door-open"></i> Salir de la sala
+        </button>
+      </div>
+    </div>
+    
+    <!-- Pantalla de juego de dados -->
+    <div id="game-dados-screen" class="screen hidden">
+      <div class="game-header">
+        <h1>Tresmil con 4 Dados</h1>
+        <div class="game-info">
+          <p id="dados-round-counter">Ronda: 1</p>
+          <p id="dados-turn-indicator">Turno de: <span id="dados-player-name-turn"></span></p>
+        </div>
+      </div>
+      
+      <div id="dados-players-container"></div>
+      
+      <div id="dados-container">
+        <div class="dado" id="dado1"></div>
+        <div class="dado" id="dado2"></div>
+        <div class="dado" id="dado3"></div>
+        <div class="dado" id="dado4"></div>
+      </div>
+      
+      <div class="puntos-info">
+        <p id="dados-puntos">Puntos: 0</p>
+        <p id="dados-puntos-guardados">Total: 0</p>
+      </div>
+      
+      <div id="dados-controls" class="hidden">
+        <button id="lanzar-dados" class="btn btn-primary">
+          <i class="fas fa-dice"></i> Lanzar Dados
+        </button>
+        <button id="plantarse-dados" class="btn btn-success">
+          <i class="fas fa-check"></i> Plantarse
+        </button>
+      </div>
+      
+      <div id="log-container">
+        <div id="log"></div>
+      </div>
+      
+      <button onclick="exitDadosGame()" class="btn btn-danger exit-button">
+        <i class="fas fa-sign-out-alt"></i> Salir
+      </button>
+    </div>
 
     <div id="notification" class="notification hidden"></div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
+  <script src="dados.js"></script>
 </body>
 </html>
