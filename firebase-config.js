@@ -1,8 +1,9 @@
+require('dotenv').config();
 // Configuración de Firebase
 const admin = require('firebase-admin');
 
 // Credenciales de Firebase
-const serviceAccount = require('./etc/secrets/firebase-credentials.json');
+const serviceAccount = require(process.env.FIREBASE_CRED_ENV || './etc/secrets/firebase-credentials.json');
 
 let db;
 
