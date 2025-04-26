@@ -5,6 +5,8 @@ let offlinePlayers = [];
 let offlineCurrentTurn = 0;
 let offlineRound = 1;
 
+let currentGameMode = ''; // 'standard', 'dados', 'offline'
+
 let gameState = {
   roomId: null,
   players: [],
@@ -338,6 +340,8 @@ function syncDadosGameState(data) {
     // Actualizar puntos
     document.getElementById('puntos').textContent = `${total}`;
   }
+    // Mostrar log para todos (no solo para el jugador actual)
+    document.getElementById('log-container').classList.remove('hidden');
 }
 // Funciones para el juego
 function increaseScore() {
@@ -709,13 +713,13 @@ function exitDadosGame() {
 }
 
 // Función para añadir mensajes al log
-function addLog(mensaje, tipo = '') {
+window.addLog = function(mensaje, tipo = '') {
   const log = document.getElementById('log');
   if (log) {
     log.innerHTML += `<div class="${tipo}">${mensaje}</div>`;
     log.scrollTop = log.scrollHeight;
   }
-}
+};
 
 // Eventos de socket
 socket.on('roomCreated', function(data) {
@@ -845,11 +849,14 @@ socket.on('gameStarted', function(data) {
 
 // Nuevo evento para inicio de juego de dados
 socket.on('dadosGameStarted', function(data) {
-  // Iniciar juego de dados
+  // Sincronizar el estado del juego con los datos recibidos
   syncDadosGameState(data);
   
   // Resetear los dados
   resetearDados();
+  
+  // Mostrar log para todos los jugadores
+  document.getElementById('log-container').classList.remove('hidden');
   
   // Crear contadores de jugadores
   createDadosPlayerCounters(data.players);
@@ -861,7 +868,34 @@ socket.on('dadosGameStarted', function(data) {
   showScreen('dados-game');
   showNotification('¡El juego de dados ha comenzado!', 'success');
 });
-
+socket.on('updateDadosState', function(data) {
+  const roomId = socket.dadosRoomId;
+  
+  if (!roomId || !dadosGameRooms[roomId]) {
+    return;
+  }
+  
+  // Guardar el estado actual de los dados en la sala
+  if (!dadosGameRooms[roomId].dadosState) {
+    dadosGameRooms[roomId].dadosState = {};
+  }
+  
+  // Actualizar el estado
+  dadosGameRooms[roomId].dadosState = {
+    valoresDados: data.valoresDados,
+    dadosBloqueados: data.dadosBloqueados,
+    total: data.total
+  };
+  
+  // Enviar actualización a todos los jugadores de la sala
+  io.to(roomId).emit('dadosActualizados', {
+    valoresDados: data.valoresDados,
+    dadosBloqueados: data.dadosBloqueados,
+    total: data.total,
+    logMessage: data.logMessage,
+    logType: data.logType
+  });
+});
 socket.on('turnChanged', function(data) {
   // Cambio de turno en juego normal
   syncGameState(data);
@@ -1032,6 +1066,246 @@ socket.on('gameHistoryData', function(data) {
 
 socket.on('playerStatsData', function(data) {
   console.log('Recibidos datos de estadísticas vía Socket.io (método obsoleto)');
+});
+socket.on('dadosAnimacion', function(data) {
+  const dadoId = data.dadoId;
+  const valor = data.valor;
+  
+  // Identificar el elemento del dado
+  const dado = document.getElementById(`dado${dadoId + 1}`);
+  
+  if (dado) {
+    // Actualizar la visualización del dado
+    dado.textContent = valor;
+    dado.style.backgroundImage = `url(images/dados/${valor}.png)`;
+    
+    // Si es el valor final de la tirada, verificar si debe ser bloqueado
+    if (data.final) {
+      // Actualizar el estado local
+      valoresDados[dadoId] = valor;
+    }
+  }
+});
+
+// Evento para notificar que un jugador está tirando dados
+socket.on('dadosTiradaIniciada', function(data) {
+  // Mostrar notificación sobre quién está tirando
+  showNotification(`${data.playerName} está tirando los dados...`, 'info');
+  
+  // Añadir un mensaje en el log
+  if (document.getElementById('log')) {
+    addLog(`${data.playerName} está tirando los dados...`, 'mensaje-info');
+  }
+});
+
+// Añadir estos manejadores de eventos al archivo app.js
+
+// Evento para recibir la secuencia de animación
+socket.on('dadosAnimacionSecuencia', function(data) {
+  const dadoId = data.dadoId;
+  const secuencia = data.secuencia;
+  
+  const dado = document.getElementById(`dado${dadoId + 1}`);
+  if (!dado) return;
+  
+  // Solo ejecutar la animación si el dado no está bloqueado
+  if (!dadosBloqueados[dadoId]) {
+    let contador = 0;
+    
+    const interval = setInterval(() => {
+      if (contador >= secuencia.length) {
+        clearInterval(interval);
+        return;
+      }
+      
+      const valorTemp = secuencia[contador];
+      
+      // Actualizar visualización
+      dado.textContent = valorTemp;
+      dado.style.backgroundImage = `url(images/dados/${valorTemp}.png)`;
+      
+      contador++;
+    }, 50);
+  }
+});
+
+// Evento para recibir los valores finales
+socket.on('dadosValoresFinales', function(data) {
+  // Actualizar los valores de los dados
+  data.valores.forEach(item => {
+    const dadoId = item.dadoId;
+    const valor = item.valor;
+    
+    // Actualizar estado local
+    valoresDados[dadoId] = valor;
+    
+    // Actualizar visualización
+    const dado = document.getElementById(`dado${dadoId + 1}`);
+    if (dado) {
+      dado.textContent = valor;
+      dado.style.backgroundImage = `url(images/dados/${valor}.png)`;
+    }
+  });
+});
+
+// Evento para iniciar la animación de tirada
+socket.on('iniciarTiradaAnimacion', function(data) {
+  // Mostrar quién está tirando
+  const mensaje = `${data.playerName} está tirando los dados...`;
+  showNotification(mensaje, 'info');
+  addLog(mensaje, 'mensaje-info');
+  
+  // Ejecutar las animaciones para todos los dados
+  data.secuencias.forEach(secuenciaInfo => {
+    const dadoId = secuenciaInfo.dadoId;
+    const secuencia = secuenciaInfo.secuencia;
+    
+    const dado = document.getElementById(`dado${dadoId + 1}`);
+    if (!dado) return;
+    
+    // Ejecutar animación
+    let contador = 0;
+    
+    const interval = setInterval(() => {
+      if (contador >= secuencia.length) {
+        clearInterval(interval);
+        return;
+      }
+      
+      const valorTemp = secuencia[contador];
+      dado.textContent = valorTemp;
+      dado.style.backgroundImage = `url(images/dados/${valorTemp}.png)`;
+      
+      contador++;
+    }, 50);
+  });
+});
+
+// Evento para mostrar los valores finales después de la animación
+socket.on('finalizarTiradaAnimacion', function(data) {
+  // Actualizar los valores finales de los dados
+  data.valoresFinales.forEach(item => {
+    const dadoId = item.dadoId;
+    const valor = item.valor;
+    
+    // Actualizar valor del dado
+    valoresDados[dadoId] = valor;
+    
+    // Actualizar visualización
+    const dado = document.getElementById(`dado${dadoId + 1}`);
+    if (dado) {
+      dado.textContent = valor;
+      dado.style.backgroundImage = `url(images/dados/${valor}.png)`;
+    }
+  });
+});
+
+// Evento para mostrar el resultado de la tirada
+socket.on('resultadoTirada', function(data) {
+  // Actualizar estado de los dados
+  dadosBloqueados = [...data.dadosBloqueados];
+  
+  // Añadir mensaje al log
+  addLog(data.mensaje, data.tipo);
+  
+  // Si hay dados con puntos, mostrar efectos visuales
+  if (data.dadosConPuntos && data.dadosConPuntos.length > 0) {
+    data.dadosConPuntos.forEach(dadoInfo => {
+      const dadoElement = document.getElementById(`dado${dadoInfo.index + 1}`);
+      if (dadoElement) {
+        // Añadir clase de bloqueado
+        dadoElement.classList.add('bloqueado');
+        
+        // Añadir animación de resaltado
+        dadoElement.classList.add('highlight-animation');
+        setTimeout(() => {
+          dadoElement.classList.remove('highlight-animation');
+        }, 1000);
+        
+        // Mostrar puntos obtenidos
+        if (dadoInfo.tipo === 'individual') {
+          addLog(`${valoresDados[dadoInfo.index]} individual en dado ${dadoInfo.index + 1}: +${dadoInfo.puntos} puntos`, 'mensaje-exito');
+        }
+      }
+    });
+  }
+  
+  // Si es tirada con negras, mostrar animación de bancarrota
+  if (data.negras) {
+    // Añadir animación de shake a los dados con negras
+    valoresDados.forEach((valor, index) => {
+      if (valor === 'N') {
+        const dadoElement = document.getElementById(`dado${index + 1}`);
+        if (dadoElement) {
+          dadoElement.classList.add('shake-animation');
+          setTimeout(() => {
+            dadoElement.classList.remove('shake-animation');
+          }, 500);
+        }
+      }
+    });
+  }
+  
+  // Si no puntuaron, mostrar animación de shake en todos los dados
+  if (!data.puntuaron && !data.negras) {
+    // Efecto visual para todos los dados
+    for (let i = 0; i < 4; i++) {
+      const dadoElement = document.getElementById(`dado${i + 1}`);
+      if (dadoElement) {
+        dadoElement.classList.add('shake-animation');
+        setTimeout(() => {
+          dadoElement.classList.remove('shake-animation');
+        }, 500);
+      }
+    }
+  }
+  
+  // Actualizar visualización de dados bloqueados
+  for (let i = 0; i < 4; i++) {
+    const dadoElement = document.getElementById(`dado${i + 1}`);
+    if (dadoElement) {
+      if (dadosBloqueados[i]) {
+        dadoElement.classList.add('bloqueado');
+      } else {
+        dadoElement.classList.remove('bloqueado');
+      }
+    }
+  }
+});
+
+// Evento para mostrar la bancarrota
+socket.on('dadosBancarrota', function() {
+  // Mostrar modal de bancarrota
+  document.getElementById('bankrupt-modal').style.display = 'flex';
+  
+  // Reiniciar valores locales
+  total = 0;
+  actualizarPuntos();
+  
+  // Ocultar el modal después de un tiempo
+  setTimeout(() => {
+    document.getElementById('bankrupt-modal').style.display = 'none';
+  }, 2000);
+});
+
+// Evento para manejar cuando todos los dados puntúan
+socket.on('todosLosDadosPuntuaron', function() {
+  // Añadir mensaje al log
+  addLog('¡Todos los dados puntuaron! Desbloqueando para la siguiente tirada.', 'mensaje-exito');
+  
+  // Mostrar notificación
+  showNotification('¡Todos los dados puntuaron! Puedes seguir tirando o plantarte.', 'success');
+  
+  // Reiniciar los dados bloqueados después de un breve retraso
+  setTimeout(() => {
+    reiniciarDados();
+  }, 500);
+});
+
+// Evento para reiniciar dados (cuando no hay dados disponibles)
+socket.on('dadosReiniciar', function() {
+  reiniciarDados();
+  addLog("Reiniciando dados para nueva tirada.", "mensaje-info");
 });
 
 // Funciones para resetear dados
@@ -1315,3 +1589,48 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM cargado, iniciando aplicación...');
   showScreen('main-menu');
 });
+
+
+// Variables para almacenar el estado actual de juego (para saber a dónde volver)
+
+// Función para mostrar el modal de confirmación de salida
+function showExitConfirmation(gameMode) {
+  currentGameMode = gameMode;
+  document.getElementById('exit-confirm-modal').style.display = 'flex';
+}
+
+// Función para confirmar la salida
+function confirmExit() {
+  document.getElementById('exit-confirm-modal').style.display = 'none';
+  
+  // Salir según el modo de juego
+  if (currentGameMode === 'standard') {
+    leaveRoom();
+    showScreen('online-menu');
+  } else if (currentGameMode === 'dados') {
+    leaveDadosRoom();
+    showScreen('dados-menu');
+  } else if (currentGameMode === 'offline') {
+    offlineMode = false;
+    showScreen('main-menu');
+  }
+}
+
+// Función para cancelar la salida
+function cancelExit() {
+  document.getElementById('exit-confirm-modal').style.display = 'none';
+}
+
+// Reemplazar las funciones existentes de salida
+function exitGame() {
+  showExitConfirmation('standard');
+}
+
+function exitDadosGame() {
+  showExitConfirmation('dados');
+}
+
+// Versión offline
+function exitOfflineGame() {
+  showExitConfirmation('offline');
+}

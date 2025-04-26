@@ -178,7 +178,20 @@
         </button>
       </div>
     </div>
-
+    <div id="exit-confirm-modal" class="modal">
+      <div class="modal-content animate__animated animate__fadeIn">
+        <h2>¿Seguro que quieres salir?</h2>
+        <p>Si sales ahora, abandonarás la partida actual.</p>
+        <div class="modal-buttons">
+          <button onclick="confirmExit()" class="btn btn-danger">
+            <i class="fas fa-check"></i> Sí, salir
+          </button>
+          <button onclick="cancelExit()" class="btn btn-secondary">
+            <i class="fas fa-times"></i> No, continuar
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- Pantalla de juego de dados - Versión reorganizada -->
     <div id="dados-game-screen" class="screen hidden">
       <div class="game-header">

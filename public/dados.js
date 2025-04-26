@@ -42,17 +42,38 @@ function tirarDadoAnimado(id, callback) {
   if (!dado) return;
 
   let contador = 0;
-  const interval = setInterval(() => {
+  const dadoId = parseInt(id.replace('dado', '')) - 1; // Convertir 'dado1' a índice 0
+  
+  // Generar secuencia completa de valores para la animación
+  const secuenciaAnimacion = [];
+  for (let i = 0; i < 12; i++) {
     const randomIndex = Math.floor(Math.random() * valores.length);
-    const valorTemp = valores[randomIndex];
-    // En lugar de asignar texto, establecer imagen de fondo
-    dado.textContent = valorTemp; // Mantener este valor para referencia interna
-    dado.style.backgroundImage = `url(images/dados/${valorTemp}.png)`;
-    contador++;
-    if (contador > 10) {
+    secuenciaAnimacion.push(valores[randomIndex]);
+  }
+  
+  // Enviar la secuencia completa al servidor para sincronización
+  if (socket && socket.dadosRoomId) {
+    socket.emit('dadosAnimacionSecuencia', {
+      dadoId: dadoId,
+      secuencia: secuenciaAnimacion
+    });
+  }
+  
+  // Ejecutar la animación localmente
+  const interval = setInterval(() => {
+    if (contador >= secuenciaAnimacion.length) {
       clearInterval(interval);
       callback();
+      return;
     }
+    
+    const valorTemp = secuenciaAnimacion[contador];
+    
+    // Actualizar la visualización local
+    dado.textContent = valorTemp;
+    dado.style.backgroundImage = `url(images/dados/${valorTemp}.png)`;
+    
+    contador++;
   }, 50);
 }
 
@@ -92,16 +113,15 @@ function lanzarDados() {
   document.getElementById('lanzar-dados').disabled = true;
   document.getElementById('plantarse-dados').disabled = true;
   
-  // Array para almacenar los dados tirados en esta ronda
-  let dadosTirados = [];
-  let promesasTiradas = [];
-  
   // Verificar si hay dados disponibles para tirar
   const dadosDisponibles = dadosBloqueados.filter(b => !b).length;
-  addLog(`Dados disponibles para tirar: ${dadosDisponibles}`);
   
   if (dadosDisponibles === 0) {
     addLog("No hay dados disponibles para tirar. Desbloqueando todos los dados.", "mensaje-info");
+    
+    // Enviar evento de reinicio de dados a todos
+    socket.emit('dadosReiniciar');
+    
     reiniciarDados();
     tiradaEnProceso = false;
     document.getElementById('lanzar-dados').disabled = false;
@@ -109,194 +129,40 @@ function lanzarDados() {
     return;
   }
   
-  // Tirar los dados no bloqueados
+  // Generar todas las secuencias de animación y los valores finales de antemano
+  const secuenciasAnimacion = [];
+  const valoresFinales = [];
+  const dadosAnimados = [];
+  
+  // Preparar los datos para cada dado
   for (let i = 0; i < 4; i++) {
     if (!dadosBloqueados[i]) {
-      const index = i;
-      promesasTiradas.push(new Promise(resolve => {
-        tirarDadoAnimado(`dado${index + 1}`, () => {
-          // Seleccionar un valor aleatorio
-          const randomIndex = Math.floor(Math.random() * valores.length);
-          const valor = valores[randomIndex];
-          
-          // Actualizar el valor y la visualización del dado
-          // Actualizar el valor y la visualización del dado
-          valoresDados[index] = valor;
-          document.getElementById(`dado${index + 1}`).textContent = valor;
-          document.getElementById(`dado${index + 1}`).style.backgroundImage = `url(images/dados/${valor}.png)`;
-          
-          // Registrar el dado tirado
-          dadosTirados.push({ index, valor });
-          resolve();
-        });
-      }));
+      // Generar secuencia de animación
+      const secuencia = [];
+      for (let j = 0; j < 12; j++) {
+        const randomIndex = Math.floor(Math.random() * valores.length);
+        secuencia.push(valores[randomIndex]);
+      }
+      
+      // Generar valor final
+      const randomIndex = Math.floor(Math.random() * valores.length);
+      const valorFinal = valores[randomIndex];
+      
+      secuenciasAnimacion.push({ dadoId: i, secuencia });
+      valoresFinales.push({ dadoId: i, valor: valorFinal });
+      dadosAnimados.push(i);
     }
   }
   
-  // Cuando todos los dados se hayan tirado
-  Promise.all(promesasTiradas).then(() => {
-    let puntos = 0;
-    let puntuaron = false;
-    
-    // Mostrar los dados tirados
-    addLog(`Dados tirados: ${dadosTirados.map(d => `Dado ${d.index + 1}: ${d.valor}`).join(', ')}`);
-    
-    // 1. Evaluar 3 Negras (pierdes todo)
-    const negras = dadosTirados.filter(d => d.valor === 'N').length;
-    if (negras >= 3) {
-      total = 0;
-      actualizarPuntos();
-      addLog('¡BANKARROTA! Que pringao!!', 'mensaje-error');
-      
-      // Efecto visual
-      dadosTirados.forEach(d => {
-        if (d.valor === 'N') {
-          const dadoElement = document.getElementById(`dado${d.index + 1}`);
-          dadoElement.classList.add('shake-animation');
-          setTimeout(() => {
-            dadoElement.classList.remove('shake-animation');
-          }, 500);
-        }
-      });
-      
-      // Actualizar en el servidor - bancarrota completa (resetea puntos guardados)
-      socket.emit('updateDadosScore', { score: 0, resetTotal: true });
-      
-      setTimeout(() => {
-        document.getElementById('bankrupt-modal').style.display = 'flex';
-        reiniciarPuntuacion();
-        reiniciarDados();
-        // Informar al servidor de la bancarrota
-        socket.emit('dadosBankrupt');
-      }, 1000);
-      
-      tiradaEnProceso = false;
-      document.getElementById('lanzar-dados').disabled = false;
-      document.getElementById('plantarse-dados').disabled = false;
-      return;
-    }
-    
-    // 2. Evaluar combinaciones de 3 iguales
-    const combinaciones = {
-      'A': 1000, // 3 Ases = 1000 puntos
-      'K': 500,  // 3 Reyes (KKK): 500 puntos
-      'Q': 400,  // 3 Reinas (QQQ): 400 puntos
-      'J': 300,  // 3 Jotas (JJJ): 300 puntos
-      'R': 200   // 3 Rojos (RRR): 200 puntos
-    };
-    
-    // Contar la frecuencia de cada valor en la tirada actual
-    const conteo = {};
-    dadosTirados.forEach(d => {
-      conteo[d.valor] = (conteo[d.valor] || 0) + 1;
-    });
-    
-    // Revisar si hay 3 de algún valor
-    for (const [valor, pts] of Object.entries(combinaciones)) {
-      if (conteo[valor] && conteo[valor] >= 3) {
-        puntos += pts;
-        puntuaron = true;
-        addLog(`¡3 ${valor}! Suman ${pts} puntos`, 'mensaje-exito');
-        
-        // Bloquear los dados con ese valor y añadir efecto visual
-        let bloqueados = 0;
-        for (const d of dadosTirados) {
-          if (d.valor === valor && bloqueados < 3) {
-            dadosBloqueados[d.index] = true;
-            const dadoElement = document.getElementById(`dado${d.index + 1}`);
-            dadoElement.classList.add('bloqueado');
-            dadoElement.classList.add('highlight-animation');
-            setTimeout(() => {
-              dadoElement.classList.remove('highlight-animation');
-            }, 1000);
-            addLog(`Bloqueando dado ${d.index + 1}`);
-            bloqueados++;
-          }
-        }
-        break; // Solo puede haber una combinación de 3 iguales en una tirada
-      }
-    }
-    
-    // 3. Evaluar A y K individuales (siempre y cuando no formen parte de un trío)
-    for (const d of dadosTirados) {
-      // Verificar que este dado no haya sido bloqueado por una combinación previa
-      if (!dadosBloqueados[d.index]) {
-        if (d.valor === 'A') {
-          puntos += 100;
-          puntuaron = true;
-          dadosBloqueados[d.index] = true;
-          const dadoElement = document.getElementById(`dado${d.index + 1}`);
-          dadoElement.classList.add('bloqueado');
-          dadoElement.classList.add('highlight-animation');
-          setTimeout(() => {
-            dadoElement.classList.remove('highlight-animation');
-          }, 1000);
-          addLog(`A individual en dado ${d.index + 1}: +100 puntos`, 'mensaje-exito');
-        } else if (d.valor === 'K') {
-          puntos += 50;
-          puntuaron = true;
-          dadosBloqueados[d.index] = true;
-          const dadoElement = document.getElementById(`dado${d.index + 1}`);
-          dadoElement.classList.add('bloqueado');
-          dadoElement.classList.add('highlight-animation');
-          setTimeout(() => {
-            dadoElement.classList.remove('highlight-animation');
-          }, 1000);
-          addLog(`K individual en dado ${d.index + 1}: +50 puntos`, 'mensaje-exito');
-        }
-      }
-    }
-    
-    // 4. Evaluar resultado de la tirada
-    if (!puntuaron) {
-      // Tirada sin puntuación - se pierden los puntos acumulados en esta ronda
-      addLog('Tirada sin puntos. Pierdes los puntos no guardados y pasa el turno.', 'mensaje-error');
-      total = 0;
-      
-      // Efecto visual para todos los dados
-      for (let i = 0; i < 4; i++) {
-        const dadoElement = document.getElementById(`dado${i + 1}`);
-        dadoElement.classList.add('shake-animation');
-        setTimeout(() => {
-          dadoElement.classList.remove('shake-animation');
-        }, 500);
-      }
-      
-      // Actualizar en el servidor - solo resetear puntos de la ronda actual
-      socket.emit('updateDadosScore', { score: 0, resetTotal: false });
-      
-      setTimeout(() => {
-        reiniciarDados();
-        // Avanzar turno
-        socket.emit('dadosFinishTurn');
-      }, 1000);
-      
-    } else {
-      // Tirada con puntuación - se suman los puntos de inmediato
-      total += puntos;
-      addLog(`Total de puntos en esta tirada: +${puntos} (Acumulado: ${total})`, 'mensaje-exito');
-      
-      // Actualizar en el servidor inmediatamente
-      socket.emit('updateDadosScore', { score: total, resetTotal: false });
-      
-      // Si todos los dados están bloqueados, desbloqueamos todos
-      if (dadosBloqueados.every(b => b)) {
-        setTimeout(() => {
-          reiniciarDados();
-          addLog('¡Todos los dados puntuaron! Desbloqueando para la siguiente tirada.', 'mensaje-exito');
-          showNotification('¡Todos los dados puntuaron! Puedes seguir tirando o plantarte.', 'success');
-        }, 1000);
-      }
-    }
-    
-    // Actualizar visualización de puntos
-    actualizarPuntos();
-    
-    // Reactivar botones
-    tiradaEnProceso = false;
-    document.getElementById('lanzar-dados').disabled = false;
-    document.getElementById('plantarse-dados').disabled = false;
+  // Enviar toda la información de la tirada al servidor
+  socket.emit('dadosTiradaCompleta', {
+    secuencias: secuenciasAnimacion,
+    valoresFinales: valoresFinales,
+    dadosAnimados: dadosAnimados
   });
+  
+  // La lógica de evaluación se ha movido al servidor para garantizar
+  // que todos los clientes vean exactamente los mismos resultados
 }
 
 // Función para plantarse y guardar los puntos
@@ -326,7 +192,7 @@ function plantarseDados() {
   actualizarPuntos();
 }
 
-// Función para reiniciar los dados
+// Función mejorada para reiniciar dados
 function reiniciarDados() {
   dadosBloqueados = [false, false, false, false];
   valoresDados = ['-', '-', '-', '-'];
@@ -335,11 +201,16 @@ function reiniciarDados() {
     const dado = document.getElementById(`dado${i}`);
     if (dado) {
       dado.textContent = '';
-      dado.style.backgroundImage = 'none'; // Quitar imagen de fondo
+      dado.style.backgroundImage = 'none';
       dado.classList.remove('bloqueado');
       dado.classList.remove('shake-animation');
       dado.classList.remove('highlight-animation');
     }
+  }
+  
+  // Sincronizar con el servidor si estamos en un juego online
+  if (socket && socket.dadosRoomId) {
+    socket.emit('dadosReiniciar');
   }
 }
 
