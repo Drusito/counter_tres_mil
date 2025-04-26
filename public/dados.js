@@ -89,10 +89,10 @@ function reiniciarPuntuacion() {
   actualizarPuntos();
 }
 
-// Función para actualizar los puntos mostrados
 function actualizarPuntos() {
-  // Mostrar los puntos actuales de la tirada
-  document.getElementById('dados-puntos').textContent = `+ ${total} pts`;
+  // Mostrar los puntos actuales de la tirada (asegurarse de que total sea un número)
+  const puntosActuales = total || 0;
+  document.getElementById('dados-puntos').textContent = `+ ${puntosActuales} pts`;
   
   // Buscar mi índice de jugador para mostrar total acumulado
   const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
@@ -101,22 +101,31 @@ function actualizarPuntos() {
     let totalAcumulado = jugador.totalScore || 0;
     document.getElementById('dados-puntos-guardados').textContent = `Total: ${totalAcumulado}`;
   }
+  
+  // Registrar en la consola para depuración
+  console.log(`Puntos actualizados: ${puntosActuales} (total en turno)`);
 }
-// Función para gestionar el estado de los botones
 function actualizarEstadoBotones() {
   const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
+  const esMiTurno = miIndice === dadosGameState.currentTurn;
+  const btnLanzar = document.getElementById('lanzar-dados');
+  const btnPlantarse = document.getElementById('plantarse-dados');
+  
+  // Verificar que los elementos existen antes de modificarlos
+  if (!btnLanzar || !btnPlantarse) return;
   
   // Si es mi turno, habilitar botones (a menos que esté en proceso una tirada)
-  if (miIndice === dadosGameState.currentTurn && !tiradaEnProceso) {
-    document.getElementById('lanzar-dados').disabled = false;
-    document.getElementById('plantarse-dados').disabled = false;
+  if (esMiTurno && !tiradaEnProceso) {
+    console.log("Habilitando botones - es mi turno");
+    btnLanzar.disabled = false;
+    btnPlantarse.disabled = total <= 0; // Solo habilitar plantarse si hay puntos
   } else {
-    // Si no es mi turno, deshabilitar botones
-    document.getElementById('lanzar-dados').disabled = true;
-    document.getElementById('plantarse-dados').disabled = true;
+    // Si no es mi turno o hay tirada en proceso, deshabilitar botones
+    console.log("Deshabilitando botones - " + (esMiTurno ? "tirada en proceso" : "no es mi turno"));
+    btnLanzar.disabled = true;
+    btnPlantarse.disabled = true;
   }
 }
-// Función principal para lanzar los dados
 function lanzarDados() {
   // Evitar múltiples tiradas simultáneas
   if (tiradaEnProceso) return;
@@ -128,11 +137,14 @@ function lanzarDados() {
     return;
   }
   
+  // Establecer estado de tirada en proceso
   tiradaEnProceso = true;
   
   // Desactivar botones durante la tirada
   document.getElementById('lanzar-dados').disabled = true;
   document.getElementById('plantarse-dados').disabled = true;
+  
+  console.log("Iniciando tirada de dados");
   
   // Verificar si hay dados disponibles para tirar
   const dadosDisponibles = dadosBloqueados.filter(b => !b).length;
@@ -143,10 +155,20 @@ function lanzarDados() {
     // Enviar evento de reinicio de dados a todos
     socket.emit('dadosReiniciar');
     
-    reiniciarDados();
+    // Reiniciar dados localmente
+    dadosBloqueados = [false, false, false, false];
+    
+    // Actualizar visualización
+    for (let i = 0; i < 4; i++) {
+      const dadoElement = document.getElementById(`dado${i + 1}`);
+      if (dadoElement) {
+        dadoElement.classList.remove('bloqueado');
+      }
+    }
+    
+    // Resetear estado
     tiradaEnProceso = false;
-    document.getElementById('lanzar-dados').disabled = false;
-    document.getElementById('plantarse-dados').disabled = false;
+    actualizarEstadoBotones();
     return;
   }
   
@@ -182,9 +204,9 @@ function lanzarDados() {
     dadosAnimados: dadosAnimados
   });
   
-  // La lógica de evaluación se ha movido al servidor para garantizar
-  // que todos los clientes vean exactamente los mismos resultados
+  console.log("Tirada enviada al servidor");
 }
+
 
 // Función para plantarse y guardar los puntos
 function plantarseDados() {

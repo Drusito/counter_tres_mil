@@ -283,8 +283,6 @@ function syncGameState(data) {
   updatePlayerCounters(gameState.players);
 }
 
-// Función para sincronizar el estado del juego de dados
-// Función para sincronizar el estado del juego de dados
 function syncDadosGameState(data) {
   // Si tenemos un currentPlayerIndex en los datos, sincronizar el estado del juego
   if (data.currentPlayerIndex !== undefined) {
@@ -305,10 +303,12 @@ function syncDadosGameState(data) {
   document.getElementById('dados-round-counter').textContent = `Ronda: ${dadosGameState.round}`;
   if (data.currentPlayer) {
     document.getElementById('turno-jugador').textContent = data.currentPlayer.name;
+    document.getElementById('dados-current-player-name').textContent = data.currentPlayer.name;
   }
   
   // Mostrar/ocultar controles según corresponda
-  if (data.currentPlayer && data.currentPlayer.id === socket.id) {
+  const esMiTurno = data.currentPlayer && data.currentPlayer.id === socket.id;
+  if (esMiTurno) {
     document.getElementById('dados-game-controls').classList.remove('hidden');
   } else {
     document.getElementById('dados-game-controls').classList.add('hidden');
@@ -322,27 +322,54 @@ function syncDadosGameState(data) {
     // Sincronizar valores de dados
     valoresDados = data.dadosState.valoresDados;
     dadosBloqueados = data.dadosState.dadosBloqueados;
-    total = data.dadosState.total;
+    total = data.dadosState.total || 0;
     
     // Actualizar visualización de dados
     for (let i = 0; i < 4; i++) {
       const dado = document.getElementById(`dado${i + 1}`);
-      dado.textContent = valoresDados[i];
-      dado.style.backgroundImage = `url(images/dados/${valoresDados[i]}.png)`;
-      
-      if (dadosBloqueados[i]) {
-        dado.classList.add('bloqueado');
-      } else {
-        dado.classList.remove('bloqueado');
+      if (dado) {
+        dado.textContent = valoresDados[i];
+        dado.style.backgroundImage = valoresDados[i] !== '-' ? 
+          `url(images/dados/${valoresDados[i]}.png)` : 'none';
+        
+        if (dadosBloqueados[i]) {
+          dado.classList.add('bloqueado');
+        } else {
+          dado.classList.remove('bloqueado');
+        }
       }
     }
     
     // Actualizar puntos
-    document.getElementById('puntos').textContent = `${total}`;
+    actualizarPuntos();
   }
-    // Mostrar log para todos (no solo para el jugador actual)
-    document.getElementById('log-container').classList.remove('hidden');
+  
+  // Actualizar estado de los botones
+  actualizarEstadoBotones();
+    
+  // Mostrar log para todos (no solo para el jugador actual)
+  document.getElementById('log-container').classList.remove('hidden');
 }
+
+// Modificación 8: Añadir inicialización de eventos cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM cargado, iniciando aplicación...');
+  showScreen('main-menu');
+  
+  // Inicializar botones de dados
+  const btnLanzar = document.getElementById('lanzar-dados');
+  const btnPlantarse = document.getElementById('plantarse-dados');
+  
+  if (btnLanzar) {
+    btnLanzar.addEventListener('click', lanzarDados);
+    console.log('Evento de lanzar dados registrado');
+  }
+  
+  if (btnPlantarse) {
+    btnPlantarse.addEventListener('click', plantarseDados);
+    console.log('Evento de plantarse registrado');
+  }
+});
 // Funciones para el juego
 function increaseScore() {
   if (offlineMode) {
@@ -1234,18 +1261,20 @@ socket.on('resultadoTirada', function(data) {
   dadosBloqueados = [...data.dadosBloqueados];
   
   // Añadir mensaje al log
-  addLog(data.mensaje, data.tipo);
+  addLog(data.mensaje, data.tipo || '');
   
-  // Si hay puntos, actualizarlos
+  // Si hay puntos y puntuaron, actualizarlos
   if (data.puntos && data.puntuaron) {
     total += data.puntos;
     actualizarPuntos();
+    console.log(`Puntos añadidos: ${data.puntos}, total ahora: ${total}`);
   }
   
   // Si no puntuaron, resetear total
   if (!data.puntuaron) {
     total = 0;
     actualizarPuntos();
+    console.log("Tirada sin puntos, reset a 0");
   }
   
   // Si hay dados con puntos, mostrar efectos visuales
@@ -1324,8 +1353,7 @@ socket.on('resultadoTirada', function(data) {
   const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
   if (miIndice === dadosGameState.currentTurn) {
     tiradaEnProceso = false;
-    document.getElementById('lanzar-dados').disabled = false;
-    document.getElementById('plantarse-dados').disabled = false;
+    actualizarEstadoBotones();
   }
 });
 
@@ -1354,7 +1382,22 @@ socket.on('todosLosDadosPuntuaron', function() {
   
   // Reiniciar los dados bloqueados después de un breve retraso
   setTimeout(() => {
-    reiniciarDados();
+    dadosBloqueados = [false, false, false, false];
+    
+    // Actualizar visualmente
+    for (let i = 0; i < 4; i++) {
+      const dadoElement = document.getElementById(`dado${i + 1}`);
+      if (dadoElement) {
+        dadoElement.classList.remove('bloqueado');
+      }
+    }
+    
+    // Verificar si es nuestro turno y habilitar botones
+    const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
+    if (miIndice === dadosGameState.currentTurn) {
+      tiradaEnProceso = false;
+      actualizarEstadoBotones();
+    }
   }, 500);
 });
 
