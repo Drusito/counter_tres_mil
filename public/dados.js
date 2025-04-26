@@ -75,6 +75,12 @@ function tirarDadoAnimado(id, callback) {
     
     contador++;
   }, 50);
+
+  socket.emit('dadosAnimacionActual', {
+    dadoId: dadoId,
+    secuencia: secuenciaAnimacion,
+    paso: contador
+  });
 }
 
 // Función para reiniciar puntuación
@@ -85,16 +91,31 @@ function reiniciarPuntuacion() {
 
 // Función para actualizar los puntos mostrados
 function actualizarPuntos() {
+  // Mostrar los puntos actuales de la tirada
   document.getElementById('dados-puntos').textContent = `+ ${total} pts`;
   
-  // Buscar mi índice de jugador
+  // Buscar mi índice de jugador para mostrar total acumulado
   const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
   if (miIndice !== -1) {
     const jugador = dadosGameState.players[miIndice];
-    document.getElementById('dados-puntos-guardados').textContent = `Total: ${jugador.totalScore || 0}`;
+    let totalAcumulado = jugador.totalScore || 0;
+    document.getElementById('dados-puntos-guardados').textContent = `Total: ${totalAcumulado}`;
   }
 }
-
+// Función para gestionar el estado de los botones
+function actualizarEstadoBotones() {
+  const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
+  
+  // Si es mi turno, habilitar botones (a menos que esté en proceso una tirada)
+  if (miIndice === dadosGameState.currentTurn && !tiradaEnProceso) {
+    document.getElementById('lanzar-dados').disabled = false;
+    document.getElementById('plantarse-dados').disabled = false;
+  } else {
+    // Si no es mi turno, deshabilitar botones
+    document.getElementById('lanzar-dados').disabled = true;
+    document.getElementById('plantarse-dados').disabled = true;
+  }
+}
 // Función principal para lanzar los dados
 function lanzarDados() {
   // Evitar múltiples tiradas simultáneas

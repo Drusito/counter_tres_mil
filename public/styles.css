@@ -1742,3 +1742,73 @@ label {
   margin-bottom: 20px;
   opacity: 0.8;
 }
+
+/* Estilos para el nuevo scoreboard compacto */
+.compact-scoreboard {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: var(--border-radius);
+  padding: 10px;
+  box-shadow: var(--box-shadow);
+}
+
+.scoreboard-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 5px;
+  padding: 8px;
+  background-color: var(--primary-color);
+  color: var(--background-dark);
+  font-weight: bold;
+  border-radius: 6px 6px 0 0;
+  text-align: center;
+}
+
+.players-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 5px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  align-items: center;
+  transition: var(--transition);
+}
+
+.player-row:last-child {
+  border-bottom: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.player-row.active-turn {
+  background-color: rgba(212, 175, 55, 0.2);
+  font-weight: bold;
+}
+
+.player-column, .score-column, .round-column {
+  padding: 0 5px;
+  text-align: center;
+}
+
+.player-column {
+  text-align: left;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-column {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.round-column {
+  font-size: 0.9em;
+}

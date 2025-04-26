@@ -872,6 +872,15 @@ socket.on('dadosReiniciar', function() {
   socket.to(roomId).emit('dadosReiniciar');
 });
 
+// En server.js, dentro de socket.on('connection', ...)
+socket.on('dadosAnimacionActual', (data) => {
+  const roomId = socket.dadosRoomId;
+  if (!roomId || !dadosGameRooms[roomId]) return;
+  
+  // Retransmitir a todos los demás jugadores en la sala
+  socket.to(roomId).emit('dadosAnimacionMostrar', data);
+});
+
 // Modificar la función nextDadosTurn para incluir el reinicio de dados
 function nextDadosTurn(roomId) {
   if (!dadosGameRooms[roomId]) return;
@@ -918,7 +927,9 @@ function evaluarTirada(roomId, dadosTirados) {
     negras: false,
     dadosConPuntos: [],
     mensaje: '',
-    tipo: ''
+    tipo: '',
+    puntos: 0,
+    puntuaron: false
   };
   
   // 1. Evaluar 3 Negras (pierdes todo)
@@ -1065,7 +1076,6 @@ function evaluarTirada(roomId, dadosTirados) {
     }
   }
 }
-
 });
 
 // Función para comprobar victoria en el modo de dados
@@ -1176,11 +1186,24 @@ function nextTurn(roomId) {
   });
 }
 
-// Función para avanzar al siguiente turno en el modo dados
 function nextDadosTurn(roomId) {
   if (!dadosGameRooms[roomId]) return;
   
+  // Avanzar al siguiente jugador
   dadosGameRooms[roomId].currentTurn = (dadosGameRooms[roomId].currentTurn + 1) % dadosGameRooms[roomId].players.length;
+  
+  // Reiniciar puntuación temporal para el nuevo turno
+  const currentPlayer = dadosGameRooms[roomId].players[dadosGameRooms[roomId].currentTurn];
+  currentPlayer.currentRoundScore = 0;
+  
+  // Reiniciar dados para el nuevo turno
+  if (!dadosGameRooms[roomId].dadosState) {
+    dadosGameRooms[roomId].dadosState = {};
+  }
+  
+  dadosGameRooms[roomId].dadosState.dadosBloqueados = [false, false, false, false];
+  dadosGameRooms[roomId].dadosState.valoresDados = ['-', '-', '-', '-'];
+  dadosGameRooms[roomId].dadosState.total = 0;
   
   // Si hemos completado una ronda
   if (dadosGameRooms[roomId].currentTurn === 0) {
@@ -1192,10 +1215,10 @@ function nextDadosTurn(roomId) {
     currentPlayerIndex: dadosGameRooms[roomId].currentTurn,
     currentPlayer: dadosGameRooms[roomId].players[dadosGameRooms[roomId].currentTurn],
     round: dadosGameRooms[roomId].round,
-    players: dadosGameRooms[roomId].players
+    players: dadosGameRooms[roomId].players,
+    dadosState: dadosGameRooms[roomId].dadosState
   });
 }
-
 // Función para manejar la desconexión de un jugador
 function handlePlayerDisconnect(socket) {
   const roomId = socket.roomId;

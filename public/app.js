@@ -579,30 +579,43 @@ function createPlayerCounters(players) {
   });
 }
 
-// Función para crear contadores para el modo dados online
+// Función para crear el scoreboard compacto
 function createDadosPlayerCounters(players) {
-  const countersContainer = document.getElementById('dados-counters-container');
-  countersContainer.innerHTML = '';
+  // Asegúrate de que el scoreboard existe y está visible
+  const scoreboard = document.getElementById('dados-compact-scoreboard');
+  if (scoreboard) {
+    scoreboard.classList.remove('hidden');
+  }
+  
+  const playersList = document.getElementById('dados-players-list');
+  if (!playersList) return;
+  
+  playersList.innerHTML = '';
   
   players.forEach((player, index) => {
-    const counterDiv = document.createElement('div');
-    counterDiv.className = 'player-counter';
-    counterDiv.id = `dados-player-${index}`;
+    const playerRow = document.createElement('div');
+    playerRow.className = 'player-row';
+    playerRow.id = `dados-player-${index}`;
     
     // Marcar el jugador activo
     if (index === dadosGameState.currentTurn) {
-      counterDiv.classList.add('active-turn');
+      playerRow.classList.add('active-turn');
     }
     
-    // Añadir contenido
-    counterDiv.innerHTML = `
-      <h3>${player.name}</h3>
-      <div class="score-display">${player.totalScore}</div>
-      <div class="current-round-score">Esta ronda: ${player.currentRoundScore}</div>
+    playerRow.innerHTML = `
+      <div class="player-column">${player.name}</div>
+      <div class="score-column">${player.totalScore || 0}</div>
+      <div class="round-column">${player.currentRoundScore || 0}</div>
     `;
     
-    countersContainer.appendChild(counterDiv);
+    playersList.appendChild(playerRow);
   });
+  
+  // Ocultar el contenedor antiguo si existe
+  const oldContainer = document.getElementById('dados-counters-container');
+  if (oldContainer) {
+    oldContainer.classList.add('hidden');
+  }
 }
 
 // Función para actualizar contadores en modo online
@@ -633,29 +646,29 @@ function updatePlayerCounters(players) {
   });
 }
 
-// Función para actualizar contadores en modo dados online
+// Función para actualizar el scoreboard compacto
 function updateDadosPlayerCounters(players) {
   players.forEach((player, index) => {
-    const counterDiv = document.getElementById(`dados-player-${index}`);
+    const playerRow = document.getElementById(`dados-player-${index}`);
     
-    if (counterDiv) {
+    if (playerRow) {
       // Actualizar valores
-      const scoreDisplay = counterDiv.querySelector('.score-display');
-      const currentRoundScore = counterDiv.querySelector('.current-round-score');
+      const scoreColumn = playerRow.querySelector('.score-column');
+      const roundColumn = playerRow.querySelector('.round-column');
       
-      if (scoreDisplay) {
-        scoreDisplay.textContent = player.totalScore;
+      if (scoreColumn) {
+        scoreColumn.textContent = player.totalScore || 0;
       }
       
-      if (currentRoundScore) {
-        currentRoundScore.textContent = `Esta ronda: ${player.currentRoundScore}`;
+      if (roundColumn) {
+        roundColumn.textContent = player.currentRoundScore || 0;
       }
       
       // Marcar turno activo
       if (index === dadosGameState.currentTurn) {
-        counterDiv.classList.add('active-turn');
+        playerRow.classList.add('active-turn');
       } else {
-        counterDiv.classList.remove('active-turn');
+        playerRow.classList.remove('active-turn');
       }
     }
   });
@@ -664,7 +677,9 @@ function updateDadosPlayerCounters(players) {
   document.getElementById('dados-round-counter').textContent = `Ronda: ${dadosGameState.round}`;
   
   if (dadosGameState.players.length > 0 && dadosGameState.currentTurn < dadosGameState.players.length) {
-    document.getElementById('dados-current-player-name').textContent = dadosGameState.players[dadosGameState.currentTurn].name;
+    const jugadorActual = dadosGameState.players[dadosGameState.currentTurn].name;
+    document.getElementById('dados-current-player-name').textContent = jugadorActual;
+    document.getElementById('turno-jugador').textContent = jugadorActual;
   }
 }
 
@@ -858,7 +873,7 @@ socket.on('dadosGameStarted', function(data) {
   // Mostrar log para todos los jugadores
   document.getElementById('log-container').classList.remove('hidden');
   
-  // Crear contadores de jugadores
+  // Crear contadores de jugadores con el nuevo scoreboard
   createDadosPlayerCounters(data.players);
   
   // Limpiar log
@@ -908,12 +923,29 @@ socket.on('turnChanged', function(data) {
 
 // Nuevo evento para cambio de turno en juego de dados
 socket.on('dadosTurnChanged', function(data) {
-  // Cambio de turno en juego de dados
+  // Sincronizar el estado del juego
   syncDadosGameState(data);
   
-  // Mostrar notificación solo si es nuestro turno
-  if (data.currentPlayer && data.currentPlayer.id === socket.id) {
+  // Resetear el estado de tirada en proceso
+  tiradaEnProceso = false;
+  
+  // Verificar si es nuestro turno y actualizar botones
+  const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
+  if (miIndice === dadosGameState.currentTurn) {
+    // Es nuestro turno - habilitar botones
+    document.getElementById('lanzar-dados').disabled = false;
+    document.getElementById('plantarse-dados').disabled = false;
     showNotification('¡Es tu turno en el juego de dados!', 'info');
+  } else {
+    // No es nuestro turno - deshabilitar botones
+    document.getElementById('lanzar-dados').disabled = true;
+    document.getElementById('plantarse-dados').disabled = true;
+  }
+  
+  // Resetear total para nuevo turno
+  if (miIndice === dadosGameState.currentTurn) {
+    total = 0;
+    actualizarPuntos();
   }
 });
 
@@ -930,29 +962,16 @@ socket.on('scoreUpdated', function(data) {
   }
 });
 
-// Actualizar manejo del evento dadosScoreUpdated
 socket.on('dadosScoreUpdated', function(data) {
   // Actualizar score en juego de dados
   dadosGameState.players = data.players;
   
+  // Actualizar el scoreboard
+  updateDadosPlayerCounters(dadosGameState.players);
+  
   // Si se resetea el total (bancarrota completa)
   if (data.resetTotal) {
-    const playerCounter = document.getElementById(`dados-player-${data.playerIndex}`);
-    if (playerCounter) {
-      const scoreDisplay = playerCounter.querySelector('.score-display');
-      if (scoreDisplay) {
-        scoreDisplay.textContent = '0';
-      }
-    }
-  }
-  
-  // Actualizar contador de puntos actuales
-  const playerCounter = document.getElementById(`dados-player-${data.playerIndex}`);
-  if (playerCounter) {
-    const currentRoundScore = playerCounter.querySelector('.current-round-score');
-    if (currentRoundScore) {
-      currentRoundScore.textContent = `Esta ronda: ${data.currentRoundScore}`;
-    }
+    // Código existente...
   }
   
   // Actualizar puntos guardados en la UI para jugador actual
@@ -1053,6 +1072,15 @@ socket.on('dadosAnimacion', function(data) {
   const dado = document.getElementById(`dado${data.dadoId}`);
   dado.textContent = data.valor;
   dado.style.backgroundImage = `url(images/dados/${data.valor}.png)`;
+});
+
+socket.on('dadosAnimacionMostrar', function(data) {
+  const dado = document.getElementById(`dado${data.dadoId + 1}`);
+  if (!dado) return;
+  
+  const valorTemp = data.secuencia[data.paso];
+  dado.textContent = valorTemp;
+  dado.style.backgroundImage = `url(images/dados/${valorTemp}.png)`;
 });
 
 socket.on('error', function(data) {
@@ -1208,6 +1236,18 @@ socket.on('resultadoTirada', function(data) {
   // Añadir mensaje al log
   addLog(data.mensaje, data.tipo);
   
+  // Si hay puntos, actualizarlos
+  if (data.puntos && data.puntuaron) {
+    total += data.puntos;
+    actualizarPuntos();
+  }
+  
+  // Si no puntuaron, resetear total
+  if (!data.puntuaron) {
+    total = 0;
+    actualizarPuntos();
+  }
+  
   // Si hay dados con puntos, mostrar efectos visuales
   if (data.dadosConPuntos && data.dadosConPuntos.length > 0) {
     data.dadosConPuntos.forEach(dadoInfo => {
@@ -1244,6 +1284,10 @@ socket.on('resultadoTirada', function(data) {
         }
       }
     });
+    
+    // Resetear total
+    total = 0;
+    actualizarPuntos();
   }
   
   // Si no puntuaron, mostrar animación de shake en todos los dados
@@ -1258,6 +1302,10 @@ socket.on('resultadoTirada', function(data) {
         }, 500);
       }
     }
+    
+    // Resetear total
+    total = 0;
+    actualizarPuntos();
   }
   
   // Actualizar visualización de dados bloqueados
@@ -1270,6 +1318,14 @@ socket.on('resultadoTirada', function(data) {
         dadoElement.classList.remove('bloqueado');
       }
     }
+  }
+  
+  // Verificar si es nuestro turno y desbloquear botones
+  const miIndice = dadosGameState.players.findIndex(p => p.id === socket.id);
+  if (miIndice === dadosGameState.currentTurn) {
+    tiradaEnProceso = false;
+    document.getElementById('lanzar-dados').disabled = false;
+    document.getElementById('plantarse-dados').disabled = false;
   }
 });
 

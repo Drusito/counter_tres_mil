@@ -201,7 +201,17 @@
           <p id="dados-turn-indicator">Turno de: <span id="dados-current-player-name"></span></p>
         </div>
       </div>
-      <div id="dados-counters-container"></div>
+      <div id="dados-compact-scoreboard" class="compact-scoreboard">
+        <div class="scoreboard-header">
+          <div class="player-column">Jugador</div>
+          <div class="score-column">Total</div>
+          <div class="round-column">Ronda</div>
+        </div>
+        <div id="dados-players-list" class="players-list">
+          <!-- Los jugadores se añadirán dinámicamente aquí -->
+        </div>
+      </div>
+      <div class="hidden" id="dados-counters-container"></div>
       <div class="game-play-area">
         <div id="dados-container">
           <div class="dado" id="dado1"></div>
